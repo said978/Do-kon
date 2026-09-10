@@ -6,8 +6,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-test-key-saas-pos-change-this-in-production')
 
-# Production paytida xatoliklarni aniq ko'rish uchun:
-DEBUG = True
+# Production va lokal muhitlar, shuningdek brauzer tarjimasi (ОТЛАДКА: Ложь) ni inobatga olish:
+is_prod = bool(os.environ.get('DATABASE_URL'))
+debug_default = 'False' if is_prod else 'True'
+raw_debug = os.environ.get('DEBUG', os.environ.get('ОТЛАДКА', debug_default))
+DEBUG = str(raw_debug).lower() in ('true', '1', 't', 'истина', 'да')
 
 LOGGING = {
     'version': 1,
