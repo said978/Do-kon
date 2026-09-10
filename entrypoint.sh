@@ -1,19 +1,11 @@
 #!/bin/sh
 set -e
 
-echo "==> DO'KON POS: Statik fayllarni yig'ish (collectstatic)..."
-python manage.py collectstatic --noinput
+PORT="${PORT:-8000}"
+case "$PORT" in
+    (*[!0-9]*|"") PORT=8000 ;;
+esac
 
-echo "==> DO'KON POS: Ma'lumotlar bazasi migratsiyalarini qo'llash (migrate)..."
-python manage.py migrate --noinput
+echo "==> DO'KON POS: Ishga tushirilmoqda (PORT: ${PORT})..."
+exec python /app/gunicorn_run.py --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY:-3} --timeout 120 "$@"
 
-PORT=${PORT:-8000}
-WORKERS=${WEB_CONCURRENCY:-3}
-
-echo "==> DO'KON POS: Gunicorn veb-serverini 0.0.0.0:${PORT} portida ishga tushirish..."
-exec gunicorn core.wsgi:application \
-    --bind 0.0.0.0:${PORT} \
-    --workers ${WORKERS} \
-    --timeout 120 \
-    --access-logfile - \
-    --error-logfile -

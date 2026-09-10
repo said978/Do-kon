@@ -12,26 +12,21 @@ def main():
     raw_port = os.environ.get('PORT', '8000')
     port = raw_port if (raw_port and raw_port.isdigit()) else '8000'
 
-    # Agar Railway yoki PaaS muhitida (DATABASE_URL mavjud bo'lganda) runserver chaqirilsa:
+    # Har qanday argumentdagi $PORT ni haqiqiy port raqami bilan almashtirish
+    for i in range(len(sys.argv)):
+        for needle in ['$PORT', '${PORT}']:
+            if needle in sys.argv[i]:
+                sys.argv[i] = sys.argv[i].replace(needle, port)
+
+    # Agar Railway yoki PaaS muhitida runserver chaqirilsa, to'g'ridan-to'g'ri gunicorn_run ga o'tish:
     if len(sys.argv) > 1 and sys.argv[1] == 'runserver' and os.environ.get('DATABASE_URL'):
         try:
-            import django
-            django.setup()
-            from django.core.management import call_command
-            print("==> Railway: Ma'lumotlar bazasi migratsiyalari (migrate)...")
-            call_command('migrate', interactive=False)
-            print("==> Railway: Statik fayllar (collectstatic)...")
-            call_command('collectstatic', interactive=False)
+            import gunicorn_run
+            sys.argv = ['gunicorn', 'core.wsgi:application', '--bind', f'0.0.0.0:{port}', '--workers', '3']
+            gunicorn_run.main()
+            return
         except Exception as e:
-            print("==> Railway startup task warning:", e)
-
-        print(f"==> Railway: Gunicorn production server 0.0.0.0:{port} portida ishga tushirilmoqda...")
-        os.execvp("gunicorn", ["gunicorn", "core.wsgi:application", "--bind", f"0.0.0.0:{port}", "--workers", "3"])
-
-    # Lokal muhit uchun $PORT ni almashtirish
-    for i in range(len(sys.argv)):
-        if '$PORT' in sys.argv[i]:
-            sys.argv[i] = sys.argv[i].replace('$PORT', port)
+            print("==> gunicorn_run fallback error:", e)
 
     try:
         from django.core.management import execute_from_command_line
