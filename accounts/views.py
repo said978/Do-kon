@@ -1,13 +1,17 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 
 
 def login_page(request):
-    return render(request, 'login.html')
+    try:
+        return render(request, 'login.html')
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"<h1>Login Render Error: {e}</h1><pre>{traceback.format_exc()}</pre>", status=500)
 
 
 @csrf_exempt
