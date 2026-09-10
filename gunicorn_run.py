@@ -13,19 +13,33 @@ def setup_django_and_db():
     if not os.environ.get('DATABASE_URL'):
         return
 
+    import time
+    import traceback
+    import django
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+    django.setup()
+
+    from django.core.management import call_command
+
+    for attempt in range(1, 6):
+        try:
+            print(f"==> DO'KON POS: Ma'lumotlar bazasi migratsiyalari (urinish {attempt}/5)...")
+            call_command('migrate', interactive=False)
+            print("==> DO'KON POS: Migratsiyalar muvaffaqiyatli yakunlandi.")
+            break
+        except Exception as exc:
+            print(f"==> DO'KON POS: Migratsiyada xatolik (urinish {attempt}/5):", exc)
+            if attempt == 5:
+                traceback.print_exc()
+            time.sleep(2)
+
     try:
-        import django
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
-        django.setup()
-
-        from django.core.management import call_command
-        print("==> DO'KON POS: Ma'lumotlar bazasi migratsiyalari (migrate)...")
-        call_command('migrate', interactive=False)
-
         print("==> DO'KON POS: Statik fayllarni yig'ish (collectstatic)...")
         call_command('collectstatic', interactive=False)
+    except Exception as exc:
+        print("==> DO'KON POS collectstatic ogohlantirish:", exc)
 
-        # Superuser tekshirish va yaratish
+    try:
         from accounts.models import User, Company, Branch
         from datetime import timedelta
         from django.utils import timezone
@@ -47,7 +61,7 @@ def setup_django_and_db():
             admin_user.save()
             print("==> DO'KON POS: Admin yaratildi (Login: admin / Parol: admin123)")
     except Exception as exc:
-        print("==> DO'KON POS startup ogohlantirish:", exc)
+        print("==> DO'KON POS superuser warning:", exc)
 
 
 def main():

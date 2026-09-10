@@ -13,7 +13,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from accounts.views import login_page, login_session
+from accounts.views import login_page, login_session, init_db
 from accounts import tenant_api
 from accounts import tenant_invitations
 from accounts import tenant_billing
@@ -35,6 +35,7 @@ urlpatterns = [
     path('login/', login_page, name='login_page'),
     path('login-session/', login_session, name='login_session'),
     path('logout/', logout_view, name='logout'),
+    path('api/init-db/', init_db, name='init_db'),
 
     # Admin Panel
     path('admin/', admin.site.urls),
