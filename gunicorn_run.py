@@ -86,10 +86,7 @@ def main():
     if not has_app:
         cleaned_args.append('core.wsgi:application')
 
-    # 3. Bazani tayyorlash
-    setup_django_and_db()
-
-    # 4. Gunicorn ni ishga tushirish
+    # 3. Gunicorn ni zudlik bilan ishga tushirish (Railway portni tezkor ochilishini ta'minlaydi)
     from gunicorn.app.wsgiapp import run
     sys.argv = [sys.argv[0]] + cleaned_args
     print(f"==> DO'KON POS: Gunicorn server 0.0.0.0:{port} portida ishga tushmoqda...")
