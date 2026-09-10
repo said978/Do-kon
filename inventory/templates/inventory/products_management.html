@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Yuqori sarlavha va tugmalar -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold m-0"><i class="fas fa-boxes text-warning me-2"></i>Tovarlar va Ombor Boshqaruvi</h3>
+            <small class="text-muted">Ombordagi mahsulotlar qoldig'i, narxlari va Excel import/eksport</small>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary fw-bold" onclick="openAddProductModal()">
+                <i class="fas fa-plus me-1"></i> Yangi Tovar Qo'shish
+            </button>
+            <a href="/api/inventory/download-template/" class="btn btn-outline-secondary fw-bold">
+                <i class="fas fa-download me-1"></i> Shablon
+            </a>
+            <button class="btn btn-outline-success fw-bold" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-file-excel me-1"></i> Excel Import
+            </button>
+        </div>
+    </div>
+
+    <!-- Tovarlar Jadvali -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle m-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Kategoriya</th>
+                            <th>Tovar Nomi</th>
+                            <th>Shtrix-kod</th>
+                            <th>Tannarx</th>
+                            <th>Sotish Narxi</th>
+                            <th>Ombor Qoldig'i</th>
+                            <th class="text-end">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productsTableBody">
+                        <!-- JavaScript orqali tovarlar yuklanadi -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Excel Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold">Excel orqali tovarlarni yuklash</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="importForm">
+            <div class="mb-3">
+                <label class="form-label">.xlsx / .xls / .csv faylni tanlang</label>
+                <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls, .csv" required>
+            </div>
+            <button type="button" onclick="uploadExcel()" class="btn btn-success w-100 fw-bold">Yuklashni Boshlash</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    let allStocksList = [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadStocks();
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function getAuthHeaders(isJson = false) {
+        let headers = {};
+        let token = localStorage.getItem('access_token');
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+        if (isJson) {
+            headers['Content-Type'] = 'application/json';
+        }
+        let csrf = getCookie('csrftoken');
+        if (csrf) {
+            headers['X-CSRFToken'] = csrf;
+        }
+        return headers;
+    }
+
+    // Ombordagi tovarlarni yuklash
+    async function loadStocks() {
+        let tbody = document.getElementById('productsTableBody');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Tovarlar yuklanmoqda...</td></tr>';
+
+        try {
+            let res = await fetch('/api/inventory/stocks/', {
+                headers: getAuthHeaders(),
+                credentials: 'same-origin'
+            });
+
+            if (res.ok) {
+                let data = await res.json();
+                allStocksList = data.results ? data.results : data;
+                renderStocksTable(allStocksList);
+            } else if (res.status === 401) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-warning fw-bold"><i class="fas fa-lock me-1"></i> Tizimga qayta kirish talab etiladi. <a href="/login/" class="btn btn-sm btn-primary ms-2">Kirish</a></td></tr>';
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-danger"><i class="fas fa-exclamation-triangle me-1"></i> Xatolik yuz berdi (HTTP ' + res.status + ')</td></tr>';
+            }
+        } catch(e) {
+            console.error("Tovarlarni yuklashda xatolik:", e);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-danger"><i class="fas fa-exclamation-triangle me-1"></i> Server bilan bog\'lanishda xatolik yuz berdi.</td></tr>';
+        }
+    }
+
+    function renderStocksTable(list) {
+        let tbody = document.getElementById('productsTableBody');
+        tbody.innerHTML = '';
+
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-muted"><i class="fas fa-box-open fa-2x d-block mb-2 text-secondary opacity-50"></i>Omborda tovarlar mavjud emas</td></tr>';
+            return;
+        }
+
+        list.forEach((item, index) => {
+            let qty = parseFloat(item.quantity) || 0;
+            let badgeClass = qty > 10 ? 'bg-success' : (qty > 0 ? 'bg-warning text-dark' : 'bg-danger');
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(item.category_name || 'Umumiy')}</span></td>
+                    <td class="fw-bold">${escapeHtml(item.product_name)}</td>
+                    <td><code>${escapeHtml(item.barcode || '—')}</code></td>
+                    <td>${parseFloat(item.cost_price || 0).toLocaleString()} so'm</td>
+                    <td class="fw-bold text-primary">${parseFloat(item.selling_price || 0).toLocaleString()} so'm</td>
+                    <td><span class="badge ${badgeClass}">${qty} dona</span></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-warning fw-bold me-1" onclick="openEditModal(${item.product}, '${escapeQuotes(item.product_name)}', '${escapeQuotes(item.barcode || '')}', ${item.selling_price || 0})"><i class="fas fa-edit me-1"></i>Tahrirlash</button>
+                        ${item.barcode ? `<button class="btn btn-sm btn-outline-dark fw-bold" onclick="openBarcodeModal(${item.product}, '${escapeQuotes(item.product_name)}', '${escapeQuotes(item.barcode)}')"><i class="fas fa-barcode me-1"></i>Shtrix-kod</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Excel import qilish
+    async function uploadExcel() {
+        let fileInput = document.getElementById('excelFile');
+        if (!fileInput.files[0]) {
+            alert("Iltimos, fayl tanlang!");
+            return;
+        }
+
+        let uploadBtn = event?.target || document.querySelector('#importModal button.btn-success');
+        let originalText = uploadBtn ? uploadBtn.innerHTML : '';
+        if (uploadBtn) {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Yuklanmoqda...';
+        }
+
+        let formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            let res = await fetch('/api/inventory/import-excel/', {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                credentials: 'same-origin',
+                body: formData
+            });
+
+            let data = await res.json();
+            if (res.ok) {
+                let modalEl = document.getElementById('importModal');
+                let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+                fileInput.value = '';
+
+                await loadStocks();
+                alert(data.detail || "Tovarlar muvaffaqiyatli yuklandi!");
+            } else {
+                alert("Xatolik: " + (data.detail || "Yuklab bo'lmadi"));
+            }
+        } catch(e) {
+            console.error("Import xatosi:", e);
+            alert("Server bilan bog'lanishda xatolik!");
+        } finally {
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = originalText;
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeQuotes(str) {
+        if (!str) return '';
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+</script>
+
+<!-- YANGI TOVAR QO'SHISH MODAL -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i>Yangi Mahsulot Qo'shish</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="addProductForm" onsubmit="event.preventDefault(); submitAddProduct();">
+          <div class="row g-3">
+            <!-- Kategoriya -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Kategoriya *</label>
+              <div class="input-group">
+                <select id="newProdCategory" class="form-select" required>
+                  <option value="">-- Kategoriyani tanlang --</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary" onclick="promptNewCategory()" title="Yangi kategoriya yaratish">
+                  <i class="fas fa-folder-plus"></i> +
+                </button>
+              </div>
+            </div>
+
+            <!-- Tovar nomi -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Mahsulot Nomi *</label>
+              <input type="text" id="newProdName" class="form-control" placeholder="Masalan: Pepsi 1.5L" required>
+            </div>
+
+            <!-- Shtrix-kod -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Shtrix-kod</label>
+              <div class="input-group">
+                <input type="text" id="newProdBarcode" class="form-control" placeholder="Shtrix-kod kiriting">
+                <button type="button" class="btn btn-outline-primary" onclick="generateRandomBarcode()" title="Avtomatik shtrix-kod">
+                  <i class="fas fa-magic me-1"></i> Generatsiya
+                </button>
+              </div>
+              <small class="text-muted">Bo'sh qoldirsangiz, avtomatik yaratiladi</small>
+            </div>
+
+            <!-- Boshlang'ich miqdor -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Boshlang'ich Ombor Qoldig'i (dona/kg) *</label>
+              <input type="number" id="newProdQty" class="form-control" value="10" min="0" step="0.01" required>
+            </div>
+
+            <!-- Tannarxi -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Tannarxi (Kirish narxi, so'm) *</label>
+              <input type="number" id="newProdCostPrice" class="form-control" placeholder="0" min="0" step="0.01" required>
+            </div>
+
+            <!-- Sotish narxi -->
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Sotish Narxi (so'm) *</label>
+              <input type="number" id="newProdSellPrice" class="form-control" placeholder="0" min="0" step="0.01" required>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+            <button type="submit" id="btnSubmitNewProduct" class="btn btn-primary fw-bold px-4">
+              <i class="fas fa-save me-1"></i> Tovarni Saqlash
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tovarni Tahrirlash Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Tovarni Tahrirlash</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProductId">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tovar Nomi *</label>
+            <input type="text" id="editName" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Shtrix-Kod</label>
+            <input type="text" id="editBarcode" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Sotish Narxi (so'm) *</label>
+            <input type="number" id="editSellPrice" class="form-control" step="0.01">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="button" onclick="submitEdit()" class="btn btn-warning fw-bold">
+          <i class="fas fa-check me-1"></i> Saqlash
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shtrix-kod Chiqarish Modal -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold"><i class="fas fa-barcode me-2"></i>Shtrix-kod Chop Etish</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+            <label class="form-label fw-bold">Tovar:</label>
+            <p id="barcodeProductName" class="fw-bold text-primary mb-0"></p>
+            <small class="text-muted" id="barcodeProductCode"></small>
+        </div>
+        <div class="mb-3">
+            <label class="form-label fw-bold">Nechta yorliq chiqarish kerak?</label>
+            <input type="number" id="barcodeQuantity" class="form-control form-control-lg text-center" value="1" min="1" max="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="button" onclick="printBarcode()" class="btn btn-dark fw-bold"><i class="fas fa-print me-1"></i>Chop Etish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    let selectedBarcodeProductId = null;
+
+    // Tahrirlash modalini ochish
+    function openEditModal(productId, productName, barcode, sellPrice) {
+        document.getElementById('editProductId').value = productId;
+        document.getElementById('editName').value = productName;
+        document.getElementById('editBarcode').value = barcode || '';
+        document.getElementById('editSellPrice').value = sellPrice || 0;
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    // Tahrirlashni saqlash
+    async function submitEdit() {
+        let id = document.getElementById('editProductId').value;
+        let name = document.getElementById('editName').value.trim();
+        let barcode = document.getElementById('editBarcode').value.trim();
+        let sellPrice = document.getElementById('editSellPrice').value;
+
+        if (!name || !sellPrice) {
+            alert("Tovar nomi va narx majburiy!");
+            return;
+        }
+
+        try {
+            let res = await fetch(`/api/inventory/products/${id}/`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify({
+                    name: name,
+                    barcode: barcode || undefined,
+                    selling_price: sellPrice
+                })
+            });
+
+            if (res.ok) {
+                alert("Tovar muvaffaqiyatli yangilandi!");
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                loadStocks();
+            } else {
+                let err = await res.json();
+                alert("Xatolik: " + JSON.stringify(err));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Xatolik yuz berdi!");
+        }
+    }
+
+    // Shtrix-kod
+    function openBarcodeModal(productId, productName, barcode) {
+        selectedBarcodeProductId = productId;
+        document.getElementById('barcodeProductName').innerText = productName;
+        document.getElementById('barcodeProductCode').innerText = 'Shtrix-kod: ' + barcode;
+        document.getElementById('barcodeQuantity').value = 1;
+        new bootstrap.Modal(document.getElementById('barcodeModal')).show();
+    }
+
+    function printBarcode() {
+        let qty = document.getElementById('barcodeQuantity').value;
+        if (!selectedBarcodeProductId || qty < 1) return;
+        let printUrl = `/api/sales/print-barcode/${selectedBarcodeProductId}/?quantity=${qty}`;
+        window.open(printUrl, '_blank', 'width=500,height=600');
+        bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+    }
+
+    // YANGI TOVAR QO'SHISH FUNKSIYALARI
+    let cachedCategories = [];
+
+    async function loadCategories() {
+        let select = document.getElementById('newProdCategory');
+        if (!select) return;
+        try {
+            let res = await fetch('/api/inventory/categories/', {
+                headers: getAuthHeaders(),
+                credentials: 'same-origin'
+            });
+            if (res.ok) {
+                let data = await res.json();
+                cachedCategories = data.results || data;
+                select.innerHTML = '<option value="">-- Kategoriyani tanlang --</option>';
+                cachedCategories.forEach(cat => {
+                    select.innerHTML += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+                });
+            }
+        } catch(e) {
+            console.error("Kategoriyalarni yuklashda xatolik:", e);
+        }
+    }
+
+    function openAddProductModal() {
+        document.getElementById('addProductForm').reset();
+        document.getElementById('newProdQty').value = 10;
+        loadCategories();
+        generateRandomBarcode();
+        let modal = new bootstrap.Modal(document.getElementById('addProductModal'));
+        modal.show();
+    }
+
+    function generateRandomBarcode() {
+        // 12 xonali shtrix-kod: 200 + 9 ta tasodifiy raqam
+        let randomPart = Math.floor(100000000 + Math.random() * 900000000);
+        let barcode = '200' + randomPart;
+        document.getElementById('newProdBarcode').value = barcode;
+    }
+
+    async function promptNewCategory() {
+        let name = prompt("Yangi kategoriya nomini kiriting:");
+        if (!name || !name.trim()) return;
+
+        try {
+            let res = await fetch('/api/inventory/categories/', {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                credentials: 'same-origin',
+                body: JSON.stringify({ name: name.trim() })
+            });
+
+            if (res.ok) {
+                let newCat = await res.json();
+                await loadCategories();
+                document.getElementById('newProdCategory').value = newCat.id;
+            } else {
+                let err = await res.json();
+                alert("Kategoriya yaratib bo'lmadi: " + JSON.stringify(err));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Xatolik yuz berdi!");
+        }
+    }
+
+    async function submitAddProduct() {
+        let categoryId = document.getElementById('newProdCategory').value;
+        let name = document.getElementById('newProdName').value.trim();
+        let barcode = document.getElementById('newProdBarcode').value.trim();
+        let costPrice = document.getElementById('newProdCostPrice').value;
+        let sellPrice = document.getElementById('newProdSellPrice').value;
+        let initialQty = document.getElementById('newProdQty').value;
+
+        if (!categoryId || !name || !sellPrice) {
+            alert("Kategoriya, Mahsulot nomi va Sotish narxi majburiy!");
+            return;
+        }
+
+        if (!barcode) {
+            generateRandomBarcode();
+            barcode = document.getElementById('newProdBarcode').value.trim();
+        }
+
+        let btn = document.getElementById('btnSubmitNewProduct');
+        let origBtnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saqlanmoqda...';
+
+        let payload = {
+            category: parseInt(categoryId),
+            name: name,
+            barcode: barcode,
+            cost_price: parseFloat(costPrice || 0),
+            selling_price: parseFloat(sellPrice || 0),
+            initial_quantity: parseFloat(initialQty || 0)
+        };
+
+        try {
+            let res = await fetch('/api/inventory/products/', {
+                method: 'POST',
+                headers: getAuthHeaders(true),
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                let modalEl = document.getElementById('addProductModal');
+                let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+
+                await loadStocks();
+                alert(`"${name}" mahsuloti muvaffaqiyatli saqlandi va omborga ${initialQty} dona qo'shildi!`);
+            } else {
+                let err = await res.json();
+                alert("Xatolik: " + JSON.stringify(err));
+            }
+        } catch(e) {
+            console.error("Tovar qo'shish xatosi:", e);
+            alert("Server bilan bog'lanishda xatolik yuz berdi!");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origBtnText;
+        }
+    }
+</script>
+{% endblock %}

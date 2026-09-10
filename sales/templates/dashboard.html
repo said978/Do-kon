@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- YUQORI SARLAVHA VA TEZKOR TUGMALAR -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border gap-2">
+        <div>
+            <h4 class="fw-bold m-0 text-dark">
+                <i class="fas fa-tachometer-alt text-primary me-2"></i>Boshqaruv Paneli (Dashboard)
+            </h4>
+            <small class="text-muted">Do'koningizning real vaqt rejimidagi asosiy moliyaviy va ombor ko'rsatkichlari</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/api/sales/pos/" class="btn btn-success fw-bold shadow-sm">
+                <i class="fas fa-cash-register me-1"></i> Kassa (POS)
+            </a>
+            <a href="/api/inventory/products-page/" class="btn btn-warning fw-bold text-dark shadow-sm">
+                <i class="fas fa-boxes me-1"></i> Tovarlar
+            </a>
+            <a href="/api/sales/customers-page/" class="btn btn-primary fw-bold shadow-sm">
+                <i class="fas fa-users me-1"></i> Mijozlar
+            </a>
+        </div>
+    </div>
+
+    <!-- 1. ASOSIY KPI BLOKLARI (4 TA KARTA) -->
+    <div class="row g-3 mb-4">
+        <!-- Bugungi Savdo -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white border-start border-4 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Bugungi Savdo</span>
+                        <h3 class="fw-bold text-success m-0 mt-1" id="kpiTodaySales">0 so'm</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
+                        <i class="fas fa-coins fa-2x"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small" style="font-size: 11px;">
+                    Naqd: <span id="kpiTodayCash" class="fw-bold text-dark">0</span> | Karta: <span id="kpiTodayCard" class="fw-bold text-dark">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bugungi Sof Foyda -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white border-start border-4 border-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Bugungi Sof Foyda</span>
+                        <h3 class="fw-bold text-primary m-0 mt-1" id="kpiTodayProfit">0 so'm</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small" style="font-size: 11px;">
+                    Tannarxdan tashqari real foyda
+                </div>
+            </div>
+        </div>
+
+        <!-- Bugungi Cheklar Soni -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white border-start border-4 border-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Bugungi Cheklar</span>
+                        <h3 class="fw-bold text-info m-0 mt-1" id="kpiTodayReceipts">0 ta</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 p-3 rounded-circle text-info">
+                        <i class="fas fa-receipt fa-2x"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small" style="font-size: 11px;">
+                    Bugun xizmat ko'rsatilgan xaridlar
+                </div>
+            </div>
+        </div>
+
+        <!-- Jami Nasiya Qarzlar -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase">Jami Nasiya Qarzlari</span>
+                        <h3 class="fw-bold text-danger m-0 mt-1" id="kpiTotalDebt">0 so'm</h3>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger">
+                        <i class="fas fa-hand-holding-usd fa-2x"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small" style="font-size: 11px;">
+                    Mijozlar tomonidan to'lanishi kutilayotgan
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. GRAFIK VA TO'LOV TURLARI -->
+    <div class="row g-3 mb-4">
+        <!-- Oxirgi 7 kunlik savdo grafigi -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0 text-dark">
+                        <i class="fas fa-chart-area text-primary me-2"></i>Oxirgi 7 Kunlik Savdo Dinamikasi
+                    </h5>
+                    <span class="badge bg-light text-secondary border">Haftalik monitoring</span>
+                </div>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bugungi To'lovlar Taqsimoti -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <h5 class="fw-bold mb-3 text-dark">
+                    <i class="fas fa-wallet text-success me-2"></i>Bugungi To'lovlar Turi
+                </h5>
+                <div class="mt-2">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small fw-bold text-dark"><i class="fas fa-money-bill-wave text-success me-1"></i>Naqd pul:</span>
+                            <span id="cashPercentText" class="small fw-bold text-success">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="cashProgressBar" class="progress-bar bg-success" style="width: 0%"></div>
+                        </div>
+                        <div class="text-end text-muted small mt-1" id="cashAmountLabel">0 so'm</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small fw-bold text-dark"><i class="fas fa-credit-card text-primary me-1"></i>Plastik karta:</span>
+                            <span id="cardPercentText" class="small fw-bold text-primary">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="cardProgressBar" class="progress-bar bg-primary" style="width: 0%"></div>
+                        </div>
+                        <div class="text-end text-muted small mt-1" id="cardAmountLabel">0 so'm</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small fw-bold text-dark"><i class="fas fa-handshake text-danger me-1"></i>Nasiya / Qarz:</span>
+                            <span id="debtPercentText" class="small fw-bold text-danger">0%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div id="debtProgressBar" class="progress-bar bg-danger" style="width: 0%"></div>
+                        </div>
+                        <div class="text-end text-muted small mt-1" id="debtAmountLabel">0 so'm</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. KAM QOLGAN TOVARLAR VA SO'NGGI SAVDOLAR -->
+    <div class="row g-3">
+        <!-- Kam Qolgan Mahsulotlar (Ogohlantirish) -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 p-0 bg-white h-100 overflow-hidden">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                    <h6 class="fw-bold m-0 text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Kam Qolgan Tovarlar (≤ 5 dona)
+                    </h6>
+                    <a href="/api/inventory/products-page/" class="btn btn-sm btn-outline-danger fw-bold">Omborga o'tish</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mahsulot</th>
+                                <th>Shtrix-kod</th>
+                                <th>Narxi</th>
+                                <th class="text-center">Qoldiq</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lowStockTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center p-3 text-muted">Yuklanmoqda...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- So'nggi Savdolar (Oxirgi cheklar) -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 p-0 bg-white h-100 overflow-hidden">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                    <h6 class="fw-bold m-0 text-primary">
+                        <i class="fas fa-history me-2"></i>So'nggi Xaridlar
+                    </h6>
+                    <a href="/api/sales/reports/general/" class="btn btn-sm btn-outline-primary fw-bold">Barchasi</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Chek</th>
+                                <th>Mijoz</th>
+                                <th>To'lov</th>
+                                <th class="text-end">Summa</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentSalesTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center p-3 text-muted">Yuklanmoqda...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js kutubxonasi -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let salesChartInstance = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadDashboardData();
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function getAuthHeaders() {
+        let headers = {};
+        let token = localStorage.getItem('access_token');
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+        let csrf = getCookie('csrftoken');
+        if (csrf) headers['X-CSRFToken'] = csrf;
+        return headers;
+    }
+
+    async function loadDashboardData() {
+        try {
+            let res = await fetch('/api/sales/dashboard-stats/', {
+                headers: getAuthHeaders(),
+                credentials: 'same-origin'
+            });
+
+            if (res.ok) {
+                let data = await res.json();
+                renderKPIs(data);
+                renderChart(data);
+                renderPaymentBreakdown(data);
+                renderLowStocks(data.low_stocks || []);
+                renderRecentSales(data.recent_sales || []);
+            } else {
+                console.error("Dashboard yuklanmadi:", res.status);
+            }
+        } catch(e) {
+            console.error("Dashboard ma'lumotlarida xatolik:", e);
+        }
+    }
+
+    function renderKPIs(data) {
+        document.getElementById('kpiTodaySales').innerText = parseFloat(data.today_total || 0).toLocaleString() + " so'm";
+        document.getElementById('kpiTodayProfit').innerText = parseFloat(data.today_profit || 0).toLocaleString() + " so'm";
+        document.getElementById('kpiTodayReceipts').innerText = (data.today_count || 0) + " ta";
+        document.getElementById('kpiTotalDebt').innerText = parseFloat(data.total_debt || 0).toLocaleString() + " so'm";
+
+        document.getElementById('kpiTodayCash').innerText = parseFloat(data.today_cash || 0).toLocaleString();
+        document.getElementById('kpiTodayCard').innerText = parseFloat(data.today_card || 0).toLocaleString();
+    }
+
+    function renderPaymentBreakdown(data) {
+        let total = parseFloat(data.today_total || 0);
+        let cash = parseFloat(data.today_cash || 0);
+        let card = parseFloat(data.today_card || 0);
+        let debt = parseFloat(data.today_debt || 0);
+
+        let cashPct = total > 0 ? Math.round((cash / total) * 100) : 0;
+        let cardPct = total > 0 ? Math.round((card / total) * 100) : 0;
+        let debtPct = total > 0 ? Math.round((debt / total) * 100) : 0;
+
+        document.getElementById('cashProgressBar').style.width = cashPct + '%';
+        document.getElementById('cashPercentText').innerText = cashPct + '%';
+        document.getElementById('cashAmountLabel').innerText = cash.toLocaleString() + " so'm";
+
+        document.getElementById('cardProgressBar').style.width = cardPct + '%';
+        document.getElementById('cardPercentText').innerText = cardPct + '%';
+        document.getElementById('cardAmountLabel').innerText = card.toLocaleString() + " so'm";
+
+        document.getElementById('debtProgressBar').style.width = debtPct + '%';
+        document.getElementById('debtPercentText').innerText = debtPct + '%';
+        document.getElementById('debtAmountLabel').innerText = debt.toLocaleString() + " so'm";
+    }
+
+    function renderChart(data) {
+        let ctx = document.getElementById('salesChart').getContext('2d');
+        let labels = data.chart_labels || [];
+        let salesData = data.chart_data || [];
+        let profitData = data.chart_profit || [];
+
+        if (salesChartInstance) {
+            salesChartInstance.destroy();
+        }
+
+        salesChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: "Savdo Tushumi (so'm)",
+                        data: salesData,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0d6efd'
+                    },
+                    {
+                        label: "Sof Foyda (so'm)",
+                        data: profitData,
+                        borderColor: '#198754',
+                        backgroundColor: 'rgba(25, 135, 84, 0.05)',
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#198754'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { weight: 'bold' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + " so'm";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + " so'm";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderLowStocks(list) {
+        let tbody = document.getElementById('lowStockTableBody');
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-success fw-bold"><i class="fas fa-check-circle me-1"></i> Barcha tovarlar zaxirasi yetarli darajada!</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        list.forEach(item => {
+            let qty = parseFloat(item.quantity || 0);
+            let badgeClass = qty <= 0 ? 'bg-danger' : 'bg-warning text-dark';
+            tbody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-dark">${escapeHtml(item.product_name)}</td>
+                    <td><code>${escapeHtml(item.barcode || '—')}</code></td>
+                    <td>${parseFloat(item.selling_price || 0).toLocaleString()} so'm</td>
+                    <td class="text-center">
+                        <span class="badge ${badgeClass} fs-6">${qty} dona</span>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function renderRecentSales(list) {
+        let tbody = document.getElementById('recentSalesTableBody');
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted">Hozircha savdolar mavjud emas</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        list.forEach(s => {
+            let methodBadge = s.payment_method === 'Naqd' ? 'bg-success' : (s.payment_method === 'Karta' ? 'bg-primary' : 'bg-danger');
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <span class="fw-bold">#${s.id}</span>
+                        <small class="text-muted d-block">${s.time}</small>
+                    </td>
+                    <td>${escapeHtml(s.customer || 'Ommaviy')}</td>
+                    <td><span class="badge ${methodBadge}">${s.payment_method}</span></td>
+                    <td class="text-end fw-bold text-dark">${parseFloat(s.total || 0).toLocaleString()} so'm</td>
+                </tr>
+            `;
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+{% endblock %}

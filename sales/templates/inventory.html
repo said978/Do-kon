@@ -1,0 +1,56 @@
+<!-- Ombor jadvalidagi harakatlar ustuni -->
+<td>
+    <button class="btn btn-sm btn-outline-primary" onclick="openBarcodeModal({{ product.id }}, '{{ product.name|escapejs }}')">
+        <i class="bi bi-printer"></i> Shtrix-kod
+    </button>
+</td>
+<!-- Shtrix-kod Chop Etish Modali -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Shtrix-kod chop etish</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="barcodeProductName" class="fw-bold text-primary mb-2"></p>
+        <div class="mb-3">
+          <label for="barcodeQuantity" class="form-label">Nechta etiketka chop etilsin?</label>
+          <input type="number" class="form-control" id="barcodeQuantity" value="1" min="1" max="500">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="button" class="btn btn-success" onclick="submitBarcodePrint()">
+            <i class="bi bi-printer-fill"></i> Chop Etish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+let selectedProductIdForBarcode = null;
+
+function openBarcodeModal(productId, productName) {
+    selectedProductIdForBarcode = productId;
+    document.getElementById('barcodeProductName').innerText = productName;
+    document.getElementById('barcodeQuantity').value = 1;
+
+    let modalEl = document.getElementById('barcodeModal');
+    let modalInstance = new bootstrap.Modal(modalEl);
+    modalInstance.show();
+}
+
+function submitBarcodePrint() {
+    if (!selectedProductIdForBarcode) return;
+
+    let quantity = document.getElementById('barcodeQuantity').value || 1;
+
+    // Yangi oynada chop etish sahifasini ochadi
+    let printUrl = `/api/sales/print-barcode/${selectedProductIdForBarcode}/?quantity=${quantity}`;
+    window.open(printUrl, '_blank', 'width=400,height=500');
+
+    // Modalni yopish
+    let modalEl = document.getElementById('barcodeModal');
+    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) modalInstance.hide();
+}

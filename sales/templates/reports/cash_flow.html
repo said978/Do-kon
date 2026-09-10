@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-cash-register me-2"></i>Kassa Aylanmasi Hisoboti</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>#</th><th>Kassa kodi</th><th>Boshlang'ich qoldiq</th><th>Savdo tushumi</th><th>Chiqim</th><th>Yakuniy qoldiq</th></tr>
+            </thead>
+            <tbody id="cashFlowReportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/cash-flow-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('cashFlowReportBody');
+            tbody.innerHTML = '';
+            data.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td class="fw-bold">${item.kassa_name}</td>
+                        <td>${parseFloat(item.start_balance).toLocaleString()} so'm</td>
+                        <td class="text-success fw-bold">+${parseFloat(item.income).toLocaleString()} so'm</td>
+                        <td class="text-danger">-${parseFloat(item.expense).toLocaleString()} so'm</td>
+                        <td class="fw-bold text-primary">${parseFloat(item.end_balance).toLocaleString()} so'm</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-layer-group me-2"></i>Kategoriya Bo'yicha Savdo</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Kategoriya Nomi</th><th>Savdo Ulushi (%)</th><th>Jami Summa</th></tr>
+            </thead>
+            <tbody id="categoriesReportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/categories-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('categoriesReportBody');
+            tbody.innerHTML = '';
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted">Savdolar topilmadi</td></tr>';
+                return;
+            }
+            data.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td class="fw-bold">${item.category}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress w-100" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" style="width: ${item.percent}%"></div>
+                                </div>
+                                <span class="fw-bold">${item.percent}%</span>
+                            </div>
+                        </td>
+                        <td class="fw-bold text-success">${parseFloat(item.total_sum).toLocaleString()} so'm</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+</script>
+{% endblock %}

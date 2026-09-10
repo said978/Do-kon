@@ -1,0 +1,1083 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* Kategoriya tugmalari (pills) paneli */
+    .cat-pills-wrapper {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: thin;
+    }
+    .cat-pills-wrapper::-webkit-scrollbar {
+        height: 5px;
+    }
+    .cat-pills-wrapper::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 4px;
+    }
+    .cat-pill-btn {
+        white-space: nowrap;
+        border-radius: 50px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        border: 1px solid #dee2e6;
+        background-color: #ffffff;
+        color: #495057;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+    }
+    .cat-pill-btn:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+    .cat-pill-btn.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: #ffffff;
+        box-shadow: 0 3px 8px rgba(13, 110, 253, 0.3);
+    }
+    .cat-pill-btn .badge {
+        font-size: 11px;
+        margin-left: 6px;
+        transition: all 0.2s;
+    }
+    .cat-pill-btn.active .badge {
+        background-color: rgba(255, 255, 255, 0.28) !important;
+        color: #ffffff !important;
+    }
+
+    /* Tovar kartochkasi */
+    .pos-product-card {
+        border-radius: 12px;
+        border: 1px solid #edf2f7;
+        background: #ffffff;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        user-select: none;
+    }
+    .pos-product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08) !important;
+        border-color: #0d6efd;
+    }
+    .pos-product-card:active {
+        transform: scale(0.98);
+    }
+
+    /* Papka kartochkasi */
+    .pos-folder-card {
+        border-radius: 12px;
+        border: 1px solid #edf2f7;
+        background: #f8fafc;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .pos-folder-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08) !important;
+        border-color: #ffc107;
+        background: #ffffff;
+    }
+
+    /* Toast xabarnoma */
+    #posToast {
+        position: fixed;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9999;
+        display: none;
+    }
+</style>
+
+<!-- KICHIK XABARNOMA TOAST -->
+<div id="posToast" class="alert alert-success shadow-lg border-0 py-2 px-4 rounded-pill fw-bold text-center">
+    <i class="fas fa-check-circle me-1"></i> <span id="posToastMsg">Tovar savatga qo'shildi!</span>
+</div>
+
+<div class="container-fluid p-0">
+    <div class="row g-3">
+        <!-- CHAP TOMON: KATEGORIYALAR VA MAHSULOTLAR -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm p-3">
+                
+                <!-- TOP HEADER: SARLAVHA, REJIM VA QIDIRUV -->
+                <div class="row g-2 align-items-center mb-3">
+                    <div class="col-md-6 d-flex align-items-center gap-2">
+                        <h5 class="fw-bold m-0 text-dark" id="posHeaderTitle">
+                            <i class="fas fa-cash-register text-primary me-2"></i>Savdo Bo'limi
+                        </h5>
+                        <div class="btn-group btn-group-sm ms-2" role="group">
+                            <button type="button" class="btn btn-primary fw-semibold" id="btnModeGrid" onclick="switchViewMode('grid')" title="Tovarlar ro'yxati">
+                                <i class="fas fa-th-large me-1"></i> Tovarlar
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary fw-semibold" id="btnModeFolders" onclick="switchViewMode('folders')" title="Kategoriyalar papkasi">
+                                <i class="fas fa-folder me-1"></i> Papkalar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                            <input type="text" id="posSearchInput" class="form-control border-start-0 ps-0"
+                                   placeholder="Tovar nomi, shtrix-kod yoki kategoriya bo'yicha qidirish..."
+                                   oninput="onSearchChange()"
+                                   onkeydown="onSearchKeyDown(event)">
+                            <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()" title="Tozalash">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KATEGORIYA FILTRLARI PANELI -->
+                <div class="bg-light p-2 rounded-3 mb-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small fw-bold text-secondary text-uppercase">
+                                <i class="fas fa-filter text-primary me-1"></i> Kategoriyalar Filtri:
+                            </span>
+                            <select id="posCategorySelect" class="form-select form-select-sm border-secondary-subtle" style="width: auto; max-width: 220px;" onchange="selectCategory(this.value)">
+                                <option value="ALL">Barcha kategoriyalar</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="badge bg-white text-dark border px-2 py-1 shadow-sm" id="filteredCountBadge">
+                                0 ta tovar
+                            </span>
+                            <button class="btn btn-link btn-sm text-decoration-none p-0 ms-2 text-muted" onclick="resetFilters()" title="Filtrni tozalash">
+                                <i class="fas fa-undo me-1"></i>Tozalash
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kategoriya Tugmalari (Pills Bar) -->
+                    <div class="cat-pills-wrapper" id="posCategoryPills">
+                        <button class="cat-pill-btn active" onclick="selectCategory('ALL')">
+                            Barchasi <span class="badge bg-secondary">...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ASOSIY KO'RSATISH MAYDONI (GRID) -->
+                <div class="row g-3" id="posMainGrid" style="min-height: 440px; max-height: 600px; overflow-y: auto;">
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="text-muted mt-2 fw-semibold">Tovarlar yuklanmoqda...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- O'NG TOMON: CHEK VA SAVATCHA -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <h6 class="fw-bold text-dark m-0">
+                        <i class="fas fa-shopping-cart text-success me-2"></i>Xarid Cheki
+                    </h6>
+                    <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-semibold" onclick="clearCart()" title="Savatni bo'shatish">
+                        <i class="fas fa-trash-alt me-1"></i> Tozalash
+                    </button>
+                </div>
+
+                <!-- Savatcha tovarlari ro'yxati -->
+                <div id="cartItemsList" style="min-height: 320px; max-height: 420px; overflow-y: auto;">
+                    <div class="text-center text-muted mt-5 py-4">
+                        <i class="fas fa-cart-arrow-down fa-3x text-secondary mb-2 opacity-50"></i>
+                        <p class="m-0 fw-semibold">Savat bo'sh. Tovar tanlang.</p>
+                        <small class="text-muted">Kategoriyadan tovar bosing yoki shtrix-kod skanerlang</small>
+                    </div>
+                </div>
+
+                <!-- Jami summa va To'lov tugmasi -->
+                <div class="border-top pt-3 mt-2">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-muted fw-semibold">Tovar turlari:</span>
+                        <span class="fw-bold" id="cartDistinctCount">0 ta</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="fs-5 fw-bold text-dark">JAMI:</span>
+                        <span class="fs-4 fw-bold text-primary" id="cartTotalSum">0 so'm</span>
+                    </div>
+                    <button class="btn btn-success w-100 btn-lg fw-bold py-2 shadow-sm" onclick="openPaymentModal()">
+                        <i class="fas fa-check-circle me-1"></i> To'lovni Qabul Qilish
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TO'LOV QA BUL QILISH MODAL OYNASI -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4 p-2">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold text-dark"><i class="fas fa-wallet text-success me-2"></i>To'lovni Yakunlash</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="bg-light p-3 rounded-3 text-center mb-3">
+            <small class="text-muted fw-bold d-block">TO'LANADIGAN SUMMA</small>
+            <h2 class="fw-bold text-primary m-0" id="modalPaymentTotal">0 so'm</h2>
+        </div>
+
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold m-0"><i class="fas fa-user text-primary me-1"></i>Xaridor (Mijoz):</label>
+                <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-semibold" onclick="quickAddCustomer()">+ Yangi mijoz</button>
+            </div>
+            <select id="posCustomerSelect" class="form-select" onchange="onCustomerChange()">
+                <option value="">Ommaviy mijoz (Oddiy)</option>
+            </select>
+            <div id="customerDebtWarning" class="alert alert-warning py-1 px-2 mt-2 mb-0 d-none" style="font-size: 12px;">
+                <i class="fas fa-exclamation-triangle me-1"></i> Ushbu mijozda <strong id="customerDebtAmount">0</strong> so'm avvalgi qarz bor!
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold"><i class="fas fa-money-bill-wave text-success me-1"></i>To'lov Turi:</label>
+            <select id="paymentMethodSelect" class="form-select form-select-lg fw-bold" onchange="onPaymentMethodChange()">
+                <option value="CASH">Naqd pul</option>
+                <option value="CARD">Plastik karta</option>
+                <option value="DEBT">Nasiya / Qarz</option>
+            </select>
+            <div id="debtWarningBox" class="alert alert-danger py-1 px-2 mt-2 mb-0 d-none" style="font-size: 12px;">
+                <i class="fas fa-hand-holding-usd me-1"></i> <strong>Diqqat:</strong> Nasiya savdo uchun aniq mijoz tanlanishi shart!
+            </div>
+        </div>
+
+        <button class="btn btn-success w-100 btn-lg fw-bold py-2" onclick="processPayment()">
+            <i class="fas fa-print me-1"></i> Tasdiqlash va Chop Etish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- PRINTER UCHUN YASHIRIN CHEK TEMPLATE -->
+<div id="receiptPrintArea" class="d-none">
+<!-- PROFESSIONAL KASSA CHEKI STYLES VA SHABLONI -->
+<style>
+    /* Oddiy rejimda ekranda ko'rinmaydi */
+    #receiptPrintArea {
+        display: none;
+    }
+
+    /* Chop etish (Print) paytidagi maxsus uslublar */
+    @media print {
+        @page {
+            size: 80mm auto; /* 80mm lentaga moslash */
+            margin: 0;
+        }
+        body * {
+            visibility: hidden !important;
+        }
+        #receiptPrintArea, #receiptPrintArea * {
+            visibility: visible !important;
+        }
+        #receiptPrintArea {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 80mm !important;
+            padding: 5mm 3mm !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            color: #000 !important;
+            background: #fff !important;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+        .receipt-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .receipt-info {
+            font-size: 11px;
+            margin-bottom: 5px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 5px;
+        }
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .receipt-table th {
+            border-bottom: 1px solid #000;
+            text-align: left;
+            padding: 2px 0;
+        }
+        .receipt-table td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+        .receipt-total {
+            border-top: 1px dashed #000;
+            margin-top: 5px;
+            padding-top: 5px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        .receipt-footer {
+            text-align: center;
+            font-size: 10px;
+            margin-top: 10px;
+            border-top: 1px dashed #000;
+            padding-top: 5px;
+        }
+        .text-end { text-align: right !important; }
+        .text-center { text-align: center !important; }
+    }
+</style>
+
+<!-- CHOP ETILADIGAN CHEK KONTEYNERI -->
+
+    <div class="receipt-header">
+        <h3 class="receipt-title">BIFOZA ERP MARKET</h3>
+        <div style="font-size: 10px;">Manzil: Do'kon Asosiy Filiali</div>
+        <div style="font-size: 10px;">Tel: +998 (90) 123-45-67</div>
+    </div>
+
+    <div class="receipt-info">
+        <div><b>Sana:</b> <span id="printDate"></span></div>
+        <div><b>Chek №:</b> <span id="printReceiptId">0000</span></div>
+        <div><b>Kassir:</b> <span id="printCashier">Admin</span></div>
+        <div><b>Mijoz:</b> <span id="printCustomerName">Ommaviy mijoz</span></div>
+        <div><b>To'lov turi:</b> <span id="printPayMethod">Naqd</span></div>
+    </div>
+
+    <table class="receipt-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Tovar</th>
+                <th class="text-center" style="width: 20%;">Miqdor</th>
+                <th class="text-end" style="width: 35%;">Summa</th>
+            </tr>
+        </thead>
+        <tbody id="printItemsTable">
+            <!-- Dinamik ravishda JS orqali to'ldiriladi -->
+        </tbody>
+    </table>
+
+    <div class="receipt-total">
+        <div style="display: flex; justify-content: space-between;">
+            <span>JAMI SUMMA:</span>
+            <span id="printTotalSum">0 so'm</span>
+        </div>
+    </div>
+
+    <div class="receipt-footer">
+        <p style="margin: 2px 0; font-weight: bold;">XARIDINGIZ UCHUN RAHMAT!</p>
+        <p style="margin: 0;">Sifatli mahsulotlar va qulay xizmat</p>
+        <div style="margin-top: 5px; font-size: 9px;">*** BIFOZA POS SYSTEM ***</div>
+    </div>
+</div>
+<script>
+    let allProducts = [];
+    let cart = [];
+    let selectedCategory = 'ALL';
+    let searchQuery = '';
+    let currentViewMode = 'grid'; // 'grid' yoki 'folders'
+    let lastPrintedCart = [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadPOSData();
+    });
+
+    // MAHSULOTLARNI YUKLASH
+    async function loadPOSData() {
+        let token = localStorage.getItem('access_token');
+        let headers = {};
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        try {
+            let res = await fetch('/api/inventory/stocks/', {
+                headers: headers,
+                credentials: 'same-origin'
+            });
+
+            if (res.ok) {
+                let data = await res.json();
+                allProducts = data.results ? data.results : data;
+                initCategoriesFilter();
+                renderView();
+            } else if (res.status === 401) {
+                console.warn("Autentifikatsiya xatosi (401). Tizimga qayta kirish zarur bo'lishi mumkin.");
+                document.getElementById('posMainGrid').innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <div class="text-warning mb-3"><i class="fas fa-lock fa-3x"></i></div>
+                        <h6 class="fw-bold text-dark">Ruxsat berilmadi yoki sessiya muddati tugadi</h6>
+                        <a href="/login/" class="btn btn-primary btn-sm mt-2"><i class="fas fa-sign-in-alt me-1"></i> Tizimga kirish</a>
+                    </div>
+                `;
+            } else {
+                throw new Error("HTTP " + res.status);
+            }
+        } catch(e) {
+            console.error("POS ma'lumotlarini yuklashda xatolik:", e);
+            document.getElementById('posMainGrid').innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="text-danger mb-3"><i class="fas fa-exclamation-triangle fa-3x"></i></div>
+                    <h6 class="fw-bold text-dark">Ma'lumotlarni yuklab bo'lmadi</h6>
+                    <p class="text-muted small">Server bilan aloqada xatolik yuz berdi.</p>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadPOSData()">
+                        <i class="fas fa-redo me-1"></i> Qayta urinib ko'rish
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // KATEGORIYALARNI HISOBLASH VA FILTR TUGMALARINI YASASH
+    function initCategoriesFilter() {
+        let categoryCounts = {};
+        allProducts.forEach(item => {
+            let cat = item.category_name || (item.product && item.product.category_name) || 'Umumiy';
+            cat = cat.trim() || 'Umumiy';
+            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        });
+
+        let categories = Object.keys(categoryCounts).sort();
+
+        // 1) Dropdown selectorni to'ldirish
+        let selectEl = document.getElementById('posCategorySelect');
+        if (selectEl) {
+            selectEl.innerHTML = `<option value="ALL">Barcha kategoriyalar (${allProducts.length})</option>`;
+            categories.forEach(cat => {
+                selectEl.innerHTML += `<option value="${escapeHtml(cat)}">${escapeHtml(cat)} (${categoryCounts[cat]})</option>`;
+            });
+            selectEl.value = selectedCategory;
+        }
+
+        // 2) Kategoriya pills tugmalarini to'ldirish
+        let pillsContainer = document.getElementById('posCategoryPills');
+        if (pillsContainer) {
+            let pillsHtml = `
+                <button class="cat-pill-btn ${selectedCategory === 'ALL' ? 'active' : ''}" onclick="selectCategory('ALL')">
+                    <i class="fas fa-border-all me-1"></i> Barchasi
+                    <span class="badge ${selectedCategory === 'ALL' ? 'bg-light text-primary' : 'bg-primary text-white'} rounded-pill">${allProducts.length}</span>
+                </button>
+            `;
+
+            categories.forEach(cat => {
+                let isActive = selectedCategory === cat;
+                let count = categoryCounts[cat];
+                pillsHtml += `
+                    <button class="cat-pill-btn ${isActive ? 'active' : ''}" onclick="selectCategory('${escapeQuotes(cat)}')">
+                        ${escapeHtml(cat)}
+                        <span class="badge ${isActive ? 'bg-light text-primary' : 'bg-secondary text-white'} rounded-pill">${count}</span>
+                    </button>
+                `;
+            });
+
+            pillsContainer.innerHTML = pillsHtml;
+        }
+    }
+
+    // KATEGORIYANI TANLASH
+    function selectCategory(cat) {
+        selectedCategory = cat;
+
+        // Dropdownni sinxronlash
+        let selectEl = document.getElementById('posCategorySelect');
+        if (selectEl) selectEl.value = cat;
+
+        initCategoriesFilter();
+
+        // Agar foydalanuvchi kategoriya tanlasa, avtomatik tovarlar rejimiga o'tadi
+        if (currentViewMode === 'folders' && cat !== 'ALL') {
+            currentViewMode = 'grid';
+            updateModeButtons();
+        }
+
+        renderView();
+    }
+
+    // KO'RINISH REJIMINI O'ZGARTIRISH (GRID / FOLDERS)
+    function switchViewMode(mode) {
+        currentViewMode = mode;
+        updateModeButtons();
+        renderView();
+    }
+
+    function updateModeButtons() {
+        let btnGrid = document.getElementById('btnModeGrid');
+        let btnFolders = document.getElementById('btnModeFolders');
+        if (!btnGrid || !btnFolders) return;
+
+        if (currentViewMode === 'grid') {
+            btnGrid.className = "btn btn-primary fw-semibold";
+            btnFolders.className = "btn btn-outline-secondary fw-semibold";
+        } else {
+            btnGrid.className = "btn btn-outline-secondary fw-semibold";
+            btnFolders.className = "btn btn-warning fw-semibold text-dark";
+        }
+    }
+
+    // ASOSIY KO'RINISHNI CHIZISH
+    function renderView() {
+        if (currentViewMode === 'folders') {
+            renderFoldersView();
+        } else {
+            renderProductsGrid();
+        }
+    }
+
+    // 1) TOVARLAR GRID REJIMI
+    function renderProductsGrid() {
+        const grid = document.getElementById('posMainGrid');
+        const badgeCount = document.getElementById('filteredCountBadge');
+        if (!grid) return;
+
+        // Filtrlash
+        let filtered = allProducts.filter(item => {
+            let cat = item.category_name || (item.product && item.product.category_name) || 'Umumiy';
+            cat = cat.trim() || 'Umumiy';
+
+            if (selectedCategory !== 'ALL' && cat !== selectedCategory) {
+                return false;
+            }
+
+            if (searchQuery) {
+                let pName = (item.product_name || (item.product && item.product.name) || '').toLowerCase();
+                let barcode = (item.barcode || (item.product && item.product.barcode) || '').toLowerCase();
+                let catLower = cat.toLowerCase();
+                return pName.includes(searchQuery) || barcode.includes(searchQuery) || catLower.includes(searchQuery);
+            }
+
+            return true;
+        });
+
+        if (badgeCount) badgeCount.innerText = `${filtered.length} ta tovar`;
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <div class="text-secondary opacity-50 mb-3"><i class="fas fa-box-open fa-4x"></i></div>
+                    <h6 class="fw-bold text-dark">Mos keluvchi tovar topilmadi</h6>
+                    <p class="text-muted small">Qidiruv so'zini yoki tanlangan kategoriyani o'zgartirib ko'ring.</p>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="resetFilters()">
+                        <i class="fas fa-undo me-1"></i> Barcha tovarlarni ko'rish
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+            let qty = parseFloat(item.quantity) || 0;
+            let price = parseFloat(item.selling_price || (item.product && item.product.selling_price) || 0);
+            let pName = item.product_name || (item.product && item.product.name) || 'Nomsiz tovar';
+            let barcode = item.barcode || (item.product && item.product.barcode) || '—';
+            let catName = item.category_name || (item.product && item.product.category_name) || 'Umumiy';
+
+            let stockBadgeClass = 'bg-success-subtle text-success border border-success-subtle';
+            if (qty <= 0) {
+                stockBadgeClass = 'bg-danger-subtle text-danger border border-danger-subtle';
+            } else if (qty <= 10) {
+                stockBadgeClass = 'bg-warning-subtle text-dark border border-warning-subtle';
+            }
+
+            html += `
+                <div class="col-md-4 col-sm-6 col-6">
+                    <div class="card h-100 pos-product-card shadow-sm p-3 d-flex flex-column justify-content-between"
+                         onclick="addToCart(${item.id})">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-light text-muted border text-truncate" style="max-width: 120px;" title="${escapeHtml(catName)}">
+                                    <i class="fas fa-tag me-1"></i>${escapeHtml(catName)}
+                                </span>
+                                <span class="badge ${stockBadgeClass} rounded-pill fw-semibold" style="font-size: 11px;">
+                                    ${qty} dona
+                                </span>
+                            </div>
+                            <h6 class="fw-bold text-dark mt-2 mb-1" style="font-size: 14px; min-height: 38px; line-height: 1.3;" title="${escapeHtml(pName)}">
+                                ${escapeHtml(pName)}
+                            </h6>
+                            <small class="text-muted d-block mb-2 font-monospace" style="font-size: 11px;">
+                                <i class="fas fa-barcode me-1 text-secondary"></i>${escapeHtml(barcode)}
+                            </small>
+                        </div>
+                        <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-primary fs-6">
+                                ${price.toLocaleString()} <small style="font-size: 11px;">so'm</small>
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary rounded-circle p-1" style="width: 28px; height: 28px; line-height: 1;" title="Savatga qo'shish">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+    }
+
+    // 2) PAPKALAR REJIMI (FOLDERS)
+    function renderFoldersView() {
+        const grid = document.getElementById('posMainGrid');
+        const badgeCount = document.getElementById('filteredCountBadge');
+        if (!grid) return;
+
+        let categoryCounts = {};
+        allProducts.forEach(item => {
+            let cat = item.category_name || (item.product && item.product.category_name) || 'Umumiy';
+            cat = cat.trim() || 'Umumiy';
+            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+        });
+
+        let categories = Object.keys(categoryCounts).sort();
+        if (badgeCount) badgeCount.innerText = `${categories.length} ta kategoriya`;
+
+        let html = '';
+        categories.forEach(cat => {
+            let count = categoryCounts[cat];
+            html += `
+                <div class="col-md-4 col-sm-6 col-6">
+                    <div class="card h-100 pos-folder-card shadow-sm p-4 text-center"
+                         onclick="selectCategory('${escapeQuotes(cat)}')">
+                        <div class="text-warning mb-2">
+                            <i class="fas fa-folder-open fa-3x"></i>
+                        </div>
+                        <h6 class="fw-bold text-dark m-0 text-truncate" title="${escapeHtml(cat)}">${escapeHtml(cat)}</h6>
+                        <small class="text-muted fw-semibold mt-1 d-block">${count} ta tovar</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        grid.innerHTML = html;
+    }
+
+    // QIDIRUV VA SHTRIX-KOD SKANERI ISHLOV BERISH
+    function onSearchChange() {
+        searchQuery = document.getElementById('posSearchInput').value.toLowerCase().trim();
+        renderView();
+    }
+
+    function onSearchKeyDown(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            let query = document.getElementById('posSearchInput').value.trim();
+            if (!query) return;
+
+            let exactMatch = allProducts.find(item => {
+                let bc = (item.barcode || (item.product && item.product.barcode) || '').trim();
+                return bc === query;
+            });
+
+            if (exactMatch) {
+                addToCart(exactMatch.id);
+                document.getElementById('posSearchInput').value = '';
+                searchQuery = '';
+                renderView();
+            } else {
+                onSearchChange();
+            }
+        }
+    }
+
+    function clearSearch() {
+        document.getElementById('posSearchInput').value = '';
+        searchQuery = '';
+        renderView();
+    }
+
+    function resetFilters() {
+        selectedCategory = 'ALL';
+        searchQuery = '';
+        document.getElementById('posSearchInput').value = '';
+        initCategoriesFilter();
+        renderView();
+    }
+
+    // SAVATGA QO'SHISH
+    function addToCart(stockId) {
+        const item = allProducts.find(p => p.id === stockId);
+        if (!item) return;
+
+        const pId = item.product || item.id;
+        const pName = item.product_name || (item.product && item.product.name) || 'Tovar';
+        const price = parseFloat(item.selling_price || (item.product && item.product.selling_price) || 0);
+
+        const exist = cart.find(c => c.stockId === stockId);
+        if (exist) {
+            exist.quantity += 1;
+        } else {
+            cart.push({
+                stockId: stockId,
+                productId: pId,
+                name: pName,
+                price: price,
+                quantity: 1
+            });
+        }
+
+        renderCart();
+        showToast(`"${pName}" savatga qo'shildi!`);
+    }
+
+    function changeQty(index, delta) {
+        if (!cart[index]) return;
+        cart[index].quantity += delta;
+        if (cart[index].quantity <= 0) {
+            cart.splice(index, 1);
+        }
+        renderCart();
+    }
+
+    function removeFromCart(index) {
+        if (cart[index]) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+    }
+
+    function clearCart() {
+        if (cart.length === 0) return;
+        if (confirm("Savatni butunlay tozalashni xohlaysizmi?")) {
+            cart = [];
+            renderCart();
+        }
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cartItemsList');
+        const totalEl = document.getElementById('cartTotalSum');
+        const distinctCountEl = document.getElementById('cartDistinctCount');
+
+        if (cart.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted mt-5 py-4">
+                    <i class="fas fa-cart-arrow-down fa-3x text-secondary mb-2 opacity-50"></i>
+                    <p class="m-0 fw-semibold">Savat bo'sh. Tovar tanlang.</p>
+                    <small class="text-muted">Kategoriyadan tovar bosing yoki shtrix-kod skanerlang</small>
+                </div>
+            `;
+            totalEl.innerText = "0 so'm";
+            if (distinctCountEl) distinctCountEl.innerText = "0 ta";
+            return;
+        }
+
+        let total = 0;
+        let html = '';
+
+        cart.forEach((item, idx) => {
+            let itemTotal = item.price * item.quantity;
+            total += itemTotal;
+
+            html += `
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded-3 border">
+                    <div style="max-width: 50%;">
+                        <h6 class="fw-bold m-0 text-truncate text-dark" style="font-size: 13px;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</h6>
+                        <small class="text-muted">${item.price.toLocaleString()} so'm</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-1">
+                        <button class="btn btn-sm btn-outline-danger px-2 py-0 fw-bold" onclick="changeQty(${idx}, -1)">-</button>
+                        <span class="fw-bold px-1" style="min-width: 24px; text-align: center;">${item.quantity}</span>
+                        <button class="btn btn-sm btn-outline-success px-2 py-0 fw-bold" onclick="changeQty(${idx}, 1)">+</button>
+                        <button class="btn btn-sm text-danger ms-1 p-0" onclick="removeFromCart(${idx})" title="O'chirish">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="text-end" style="min-width: 75px;">
+                        <span class="fw-bold text-primary" style="font-size: 13px;">${itemTotal.toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        totalEl.innerText = total.toLocaleString() + " so'm";
+        if (distinctCountEl) distinctCountEl.innerText = `${cart.length} ta`;
+    }
+
+    // MIJOZLAR BILAN ISHLASH (POS)
+    let posCustomersList = [];
+
+    async function loadPOSCustomers() {
+        let token = localStorage.getItem('access_token');
+        let headers = {};
+        if (token && token !== 'null' && token !== 'undefined') headers['Authorization'] = 'Bearer ' + token;
+
+        try {
+            let res = await fetch('/api/sales/customers/', { headers: headers, credentials: 'same-origin' });
+            if (res.ok) {
+                let data = await res.json();
+                posCustomersList = data.results || data;
+                let select = document.getElementById('posCustomerSelect');
+                if (select) {
+                    let prevVal = select.value;
+                    select.innerHTML = '<option value="">Ommaviy mijoz (Oddiy)</option>';
+                    posCustomersList.forEach(c => {
+                        let debtTxt = parseFloat(c.debt_balance || 0) > 0 ? ` (Qarz: ${parseFloat(c.debt_balance).toLocaleString()} so'm)` : '';
+                        select.innerHTML += `<option value="${c.id}">${escapeHtml(c.name)}${debtTxt}</option>`;
+                    });
+                    if (prevVal) select.value = prevVal;
+                }
+            }
+        } catch(e) {
+            console.error("Mijozlarni yuklash xatosi:", e);
+        }
+    }
+
+    async function quickAddCustomer() {
+        let name = prompt("Yangi mijoz F.I.Sh (Ismi):");
+        if (!name || !name.trim()) return;
+        let phone = prompt("Mijoz telefon raqami (+998...):", "+998");
+        if (!phone || !phone.trim()) return;
+
+        let token = localStorage.getItem('access_token');
+        let headers = {'Content-Type': 'application/json'};
+        if (token && token !== 'null' && token !== 'undefined') headers['Authorization'] = 'Bearer ' + token;
+
+        try {
+            let res = await fetch('/api/sales/customers/', {
+                method: 'POST',
+                headers: headers,
+                credentials: 'same-origin',
+                body: JSON.stringify({ name: name.trim(), phone: phone.trim() })
+            });
+            if (res.ok) {
+                let newCust = await res.json();
+                await loadPOSCustomers();
+                let select = document.getElementById('posCustomerSelect');
+                if (select) {
+                    select.value = newCust.id;
+                    onCustomerChange();
+                }
+                showToast(`"${name}" mijozlar safiga qo'shildi!`);
+            } else {
+                let err = await res.json();
+                alert("Mijoz qo'shib bo'lmadi: " + JSON.stringify(err));
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Xatolik yuz berdi!");
+        }
+    }
+
+    function onCustomerChange() {
+        let select = document.getElementById('posCustomerSelect');
+        let warnBox = document.getElementById('customerDebtWarning');
+        let debtAmt = document.getElementById('customerDebtAmount');
+        if (!select || !warnBox) return;
+
+        let custId = select.value;
+        if (!custId) {
+            warnBox.classList.add('d-none');
+            onPaymentMethodChange();
+            return;
+        }
+
+        let cust = posCustomersList.find(c => String(c.id) === String(custId));
+        if (cust && parseFloat(cust.debt_balance) > 0) {
+            debtAmt.innerText = parseFloat(cust.debt_balance).toLocaleString();
+            warnBox.classList.remove('d-none');
+        } else {
+            warnBox.classList.add('d-none');
+        }
+
+        onPaymentMethodChange();
+    }
+
+    function onPaymentMethodChange() {
+        let method = document.getElementById('paymentMethodSelect').value;
+        let custId = document.getElementById('posCustomerSelect').value;
+        let box = document.getElementById('debtWarningBox');
+        if (!box) return;
+
+        if (method === 'DEBT') {
+            if (!custId) {
+                box.classList.remove('d-none');
+            } else {
+                box.classList.add('d-none');
+            }
+        } else {
+            box.classList.add('d-none');
+        }
+    }
+
+    // TO'LOV MODALINI OCHISH
+    function openPaymentModal() {
+        if (cart.length === 0) {
+            alert("Savat bo'sh! Avval tovar tanlang.");
+            return;
+        }
+
+        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('modalPaymentTotal').innerText = total.toLocaleString() + " so'm";
+
+        loadPOSCustomers();
+        onPaymentMethodChange();
+
+        let modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        modal.show();
+    }
+
+    // TO'LOV VA CHEK CHOP ETISH
+    async function processPayment() {
+        if (cart.length === 0) {
+            alert("Savat bo'sh!");
+            return;
+        }
+
+        let total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        let method = document.getElementById('paymentMethodSelect').value;
+        let customerSelect = document.getElementById('posCustomerSelect');
+        let customerId = customerSelect ? customerSelect.value : null;
+
+        if (method === 'DEBT' && !customerId) {
+            alert("Nasiya / Qarz savdosi uchun aniq mijoz tanlanishi shart!\nIltimos, xaridorni ro'yxatdan tanlang yoki '+ Yangi mijoz' tugmasi orqali qo'shing.");
+            return;
+        }
+
+        let selectedCustomerObj = customerId ? posCustomersList.find(c => String(c.id) === String(customerId)) : null;
+        let customerName = selectedCustomerObj ? selectedCustomerObj.name : 'Ommaviy mijoz';
+
+        let token = localStorage.getItem('access_token');
+
+        let itemsData = cart.map(c => {
+            let pId = c.productId;
+            let productObj = allProducts.find(p => (p.product || p.id) === pId);
+            let costPrice = productObj ? parseFloat(productObj.cost_price || productObj.product?.cost_price || 0) : 0;
+
+            return {
+                product: parseInt(pId),
+                quantity: parseInt(c.quantity),
+                price: parseFloat(c.price),
+                cost_price: costPrice
+            };
+        });
+
+        let payload = {
+            total_amount: total,
+            payment_method: method,
+            customer: customerId ? parseInt(customerId) : null,
+            items: itemsData
+        };
+
+        let headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        try {
+            let res = await fetch('/api/sales/sales/', {
+                method: 'POST',
+                headers: headers,
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                let saleData = await res.json();
+
+                lastPrintedCart = [...cart];
+                printReceipt(saleData.id || Math.floor(1000 + Math.random() * 9000), method, total, customerName);
+
+                cart = [];
+                renderCart();
+                let modalEl = document.getElementById('paymentModal');
+                let modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+
+                setTimeout(() => {
+                    window.print();
+                    loadPOSData();
+                    loadPOSCustomers();
+                }, 300);
+
+            } else {
+                let errorText = await res.text();
+                console.error("Backend xatosi:", errorText);
+                alert("To'lov saqlanmadi! Xatolik tafsiloti:\n" + errorText);
+            }
+        } catch(e) {
+            console.error("Fetch xatosi:", e);
+            alert("Tarmoq xatosi! Aloqani tekshiring.");
+        }
+    }
+
+    function printReceipt(receiptId, method, total, customerName = 'Ommaviy mijoz') {
+        document.getElementById('printReceiptId').innerText = receiptId;
+
+        let now = new Date();
+        let dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString().substring(0, 5);
+        document.getElementById('printDate').innerText = dateStr;
+
+        let payText = method === 'CASH' ? 'Naqd pul' : (method === 'CARD' ? 'Plastik karta' : 'Nasiya / Qarz');
+        document.getElementById('printPayMethod').innerText = payText;
+        document.getElementById('printTotalSum').innerText = total.toLocaleString() + " so'm";
+
+        let custEl = document.getElementById('printCustomerName');
+        if (custEl) custEl.innerText = customerName;
+
+        const tbody = document.getElementById('printItemsTable');
+        tbody.innerHTML = '';
+
+        lastPrintedCart.forEach(item => {
+            let itemTotal = item.price * item.quantity;
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <div style="font-weight: bold;">${escapeHtml(item.name)}</div>
+                        <div style="font-size: 9px; color: #444;">${item.price.toLocaleString()} x ${item.quantity}</div>
+                    </td>
+                    <td class="text-center" style="font-weight: bold;">${item.quantity}</td>
+                    <td class="text-end" style="font-weight: bold;">${itemTotal.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // YORDAMCHI FUNKSIYALAR
+    function showToast(msg) {
+        let toast = document.getElementById('posToast');
+        let toastMsg = document.getElementById('posToastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 1800);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeQuotes(str) {
+        if (!str) return '';
+        return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+</script>
+{% endblock %}

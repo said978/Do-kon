@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-credit-card me-2"></i>To'lov Turlari Bo'yicha Savdo</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>№</th>
+                    <th>To'lov Turi</th>
+                    <th>Tranzaksiyalar Soni</th>
+                    <th>Jami Tushum Summasi</th>
+                </tr>
+            </thead>
+            <tbody id="paymentsReportBody">
+                <!-- Dinamik to'ldiriladi -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        try {
+            let res = await fetch('/api/sales/reports/payments-data/', {
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            if(res.ok) {
+                let data = await res.json();
+                let tbody = document.getElementById('paymentsReportBody');
+                tbody.innerHTML = '';
+
+                data.forEach((item, idx) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td class="fw-bold">${item.method}</td>
+                            <td><span class="badge bg-secondary fs-6">${item.count} ta</span></td>
+                            <td class="fw-bold text-primary fs-6">${parseFloat(item.total).toLocaleString()} so'm</td>
+                        </tr>
+                    `;
+                });
+            }
+        } catch(e) {
+            console.error("Xatolik:", e);
+        }
+    });
+</script>
+{% endblock %}

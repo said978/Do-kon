@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-boxes me-2"></i>Mahsulotlar Bo'yicha Savdo</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Mahsulot Nomi</th><th>Sotilgan Soni</th><th>O'rtacha Narxi</th><th>Jami Summa</th></tr>
+            </thead>
+            <tbody id="productsReportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/products-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('productsReportBody');
+            tbody.innerHTML = '';
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-3 text-muted">Savdolar topilmadi</td></tr>';
+                return;
+            }
+            data.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td class="fw-bold">${item.name}</td>
+                        <td><span class="badge bg-info text-dark">${item.quantity} dona</span></td>
+                        <td>${parseFloat(item.avg_price).toLocaleString()} so'm</td>
+                        <td class="fw-bold text-success">${parseFloat(item.total_sum).toLocaleString()} so'm</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+</script>
+{% endblock %}

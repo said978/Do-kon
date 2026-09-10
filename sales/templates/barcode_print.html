@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Shtrix-kod Chop Etish</title>
+    <style>
+        /* Thermal printer etiketka o'lchamlari (masalan: 58mm x 40mm) */
+        @page {
+            size: 58mm 40mm;
+            margin: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+        .label-card {
+            width: 58mm;
+            height: 40mm;
+            box-sizing: border-box;
+            padding: 2mm 3mm;
+            text-align: center;
+            page-break-after: always; /* Har bir etiketkani alohida varaqda chiqaradi */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .product-name {
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+        .barcode-img {
+            width: 90%;
+            height: 18mm;
+            object-fit: contain;
+        }
+        .price {
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    {% for i in quantity_range %}
+    <div class="label-card">
+        <div class="product-name">{{ product.name }}</div>
+        <img class="barcode-img" src="{{ barcode_url }}" alt="Barcode">
+        <div class="price">{{ product.selling_price }} so'm</div>
+    </div>
+    {% endfor %}
+
+    <script>
+        // Sahifa yuklanishi bilan avtomatik pechat oynasini ochish
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- TEPA SARLAVHA VA SANA FILTRI -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+        <div>
+            <h4 class="fw-bold m-0 text-primary"><i class="fas fa-chart-bar me-2"></i>Umumiy Savdo Hisoboti</h4>
+            <small class="text-muted">Savdo tushumlari, sof foyda va to'lov turlari bo'yicha umumiy analitika</small>
+        </div>
+        <div class="d-flex gap-2">
+            <input type="date" id="startDate" class="form-control form-control-sm">
+            <input type="date" id="endDate" class="form-control form-control-sm">
+            <button class="btn btn-primary btn-sm fw-bold px-3" onclick="loadGeneralReport()">
+                <i class="fas fa-filter me-1"></i> Saralash
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI BLOKLARI (ASOSIY KO'RSATKICHLAR) -->
+    <div class="row g-3 mb-4">
+        <!-- Jami Tushum -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">JAMI SAVDO TUSHUMI</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiTotalSales">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-wallet fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sof Foyda -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">SOF FOYDA</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiNetProfit">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-coins fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cheklar Soni va O'rtacha Chek -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-dark-50 fw-bold">CHEKLAR SONI / O'RTACHA</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiReceiptCount">0 ta</h3>
+                        <small id="kpiAvgReceipt" class="fw-bold">O'rtacha: 0 so'm</small>
+                    </div>
+                    <i class="fas fa-receipt fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nasiya Savdo -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-danger text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">NASIYA (QARZ) SAVDO</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiDebtTotal">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-hand-holding-usd fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TO'LOV TURLARI BO'YICHA TAQSIMOT -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 border-start border-4 border-success">
+                <small class="text-muted fw-bold">NAQD PUL</small>
+                <h5 class="fw-bold text-success m-0 mt-1" id="payCash">0 so'm</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 border-start border-4 border-info">
+                <small class="text-muted fw-bold">PLASTIK KARTA</small>
+                <h5 class="fw-bold text-info m-0 mt-1" id="payCard">0 so'm</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary">
+                <small class="text-muted fw-bold">ARALASH TO'LOV</small>
+                <h5 class="fw-bold text-primary m-0 mt-1" id="paySplit">0 so'm</h5>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger">
+                <small class="text-muted fw-bold">NASIYA/QARZ</small>
+                <h5 class="fw-bold text-danger m-0 mt-1" id="payDebt">0 so'm</h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVDOLAR JADVALI -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold m-0 text-dark">Savdo operatsiyalari ro'yxati</h6>
+            <button class="btn btn-outline-success btn-sm fw-bold">
+                <i class="fas fa-file-excel me-1"></i> Excel'ga Yuklash
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Chek №</th>
+                            <th>Vaqt</th>
+                            <th>Kassir</th>
+                            <th>Mijoz</th>
+                            <th>To'lov Turi</th>
+                            <th>Summa</th>
+                            <th class="text-center">Tafsilot</th>
+                        </tr>
+                    </thead>
+                    <tbody id="generalSalesTableBody">
+                        <!-- API orqali yuklanadi -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHEK TAFSILOTI MODAL OYNASI -->
+<div class="modal fade" id="saleDetailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header bg-light border-bottom py-3">
+        <div>
+            <h5 class="modal-title fw-bold text-dark m-0">
+                <i class="fas fa-receipt text-primary me-2"></i>Chek Tafsiloti <span id="detailReceiptId" class="text-primary">#0</span>
+            </h5>
+            <small class="text-muted" id="detailDateTime"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Qisqa ma'lumotlar -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-3 col-6">
+                <div class="p-2 bg-light rounded-3 border text-center">
+                    <small class="text-muted d-block fw-semibold" style="font-size: 11px;">Kassir</small>
+                    <strong class="text-dark" id="detailCashier">Admin</strong>
+                </div>
+            </div>
+            <div class="col-sm-3 col-6">
+                <div class="p-2 bg-light rounded-3 border text-center">
+                    <small class="text-muted d-block fw-semibold" style="font-size: 11px;">Mijoz</small>
+                    <strong class="text-dark" id="detailCustomer">Ommaviy mijoz</strong>
+                </div>
+            </div>
+            <div class="col-sm-3 col-6">
+                <div class="p-2 bg-light rounded-3 border text-center">
+                    <small class="text-muted d-block fw-semibold" style="font-size: 11px;">Filial</small>
+                    <strong class="text-dark text-truncate d-block" id="detailBranch">Asosiy filial</strong>
+                </div>
+            </div>
+            <div class="col-sm-3 col-6">
+                <div class="p-2 bg-light rounded-3 border text-center">
+                    <small class="text-muted d-block fw-semibold" style="font-size: 11px;">To'lov Turi</small>
+                    <span id="detailPayMethod" class="badge bg-success">Naqd pul</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sotilgan tovarlar jadvali -->
+        <h6 class="fw-bold text-dark mb-2"><i class="fas fa-boxes me-2 text-warning"></i>Sotilgan Mahsulotlar Ro'yxati:</h6>
+        <div class="table-responsive border rounded-3 mb-3">
+            <table class="table table-hover align-middle m-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 45%;">Tovar Nomi</th>
+                        <th style="width: 15%;">Shtrix-kod</th>
+                        <th class="text-end" style="width: 15%;">Narxi</th>
+                        <th class="text-center" style="width: 10%;">Miqdori</th>
+                        <th class="text-end" style="width: 15%;">Jami</th>
+                    </tr>
+                </thead>
+                <tbody id="detailItemsTableBody">
+                    <!-- JS orqali to'ldiriladi -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Jami hisob-kitob -->
+        <div class="d-flex justify-content-between align-items-center p-3 bg-primary-subtle rounded-3 border border-primary-subtle">
+            <span class="fs-6 fw-bold text-primary">JAMI CHEK SUMMASI:</span>
+            <span class="fs-4 fw-bold text-primary" id="detailTotalSum">0 so'm</span>
+        </div>
+      </div>
+      <div class="modal-footer border-top bg-light py-2">
+        <button type="button" class="btn btn-outline-secondary fw-semibold" data-bs-dismiss="modal">Yopish</button>
+        <button type="button" class="btn btn-primary fw-bold" onclick="printDetailReceipt()">
+            <i class="fas fa-print me-1"></i> Chekni Chop Etish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHOP ETISH UCHUN CHEK STYLES VA SHABLONI -->
+<div id="receiptPrintArea" class="d-none">
+<style>
+    #receiptPrintArea { display: none; }
+    @media print {
+        @page { size: 80mm auto; margin: 0; }
+        body * { visibility: hidden !important; }
+        #receiptPrintArea, #receiptPrintArea * { visibility: visible !important; }
+        #receiptPrintArea {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 80mm !important;
+            padding: 5mm 3mm !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            color: #000 !important;
+            background: #fff !important;
+        }
+        .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px; }
+        .receipt-title { font-size: 16px; font-weight: bold; margin: 0; text-transform: uppercase; }
+        .receipt-info { font-size: 11px; margin-bottom: 5px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+        .receipt-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .receipt-table th { border-bottom: 1px solid #000; text-align: left; padding: 2px 0; }
+        .receipt-table td { padding: 3px 0; vertical-align: top; }
+        .receipt-total { border-top: 1px dashed #000; margin-top: 5px; padding-top: 5px; font-size: 13px; font-weight: bold; }
+        .receipt-footer { text-align: center; font-size: 10px; margin-top: 10px; border-top: 1px dashed #000; padding-top: 5px; }
+        .text-end { text-align: right !important; }
+        .text-center { text-align: center !important; }
+    }
+</style>
+    <div class="receipt-header">
+        <h3 class="receipt-title">{{ company_name|default:"BIFOZA ERP MARKET" }}</h3>
+        <div style="font-size: 10px;">Savdo Cheki</div>
+    </div>
+    <div class="receipt-info">
+        <div><b>Sana:</b> <span id="printDate"></span></div>
+        <div><b>Chek №:</b> <span id="printReceiptId">0000</span></div>
+        <div><b>Kassir:</b> <span id="printCashier">Admin</span></div>
+        <div><b>To'lov turi:</b> <span id="printPayMethod">Naqd</span></div>
+    </div>
+    <table class="receipt-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Tovar</th>
+                <th class="text-center" style="width: 20%;">Miqdor</th>
+                <th class="text-end" style="width: 35%;">Summa</th>
+            </tr>
+        </thead>
+        <tbody id="printItemsTable"></tbody>
+    </table>
+    <div class="receipt-total">
+        <div style="display: flex; justify-content: space-between;">
+            <span>JAMI SUMMA:</span>
+            <span id="printTotalSum">0 so'm</span>
+        </div>
+    </div>
+    <div class="receipt-footer">
+        <p style="margin: 2px 0; font-weight: bold;">XARIDINGIZ UCHUN RAHMAT!</p>
+        <div style="margin-top: 5px; font-size: 9px;">*** BIFOZA POS SYSTEM ***</div>
+    </div>
+</div>
+
+<script>
+    let currentSalesList = [];
+    let selectedSaleForPrint = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
+        document.getElementById('endDate').value = today;
+
+        loadGeneralReport();
+    });
+
+    async function loadGeneralReport() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const token = localStorage.getItem('access_token');
+        let headers = { 'Content-Type': 'application/json' };
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        try {
+            const res = await fetch(`/api/sales/reports/general-data/?start_date=${start}&end_date=${end}`, {
+                headers: headers,
+                credentials: 'same-origin'
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                currentSalesList = data.sales_list || [];
+
+                // KPI lar
+                document.getElementById('kpiTotalSales').innerText = parseFloat(data.total_sales || 0).toLocaleString() + " so'm";
+                document.getElementById('kpiNetProfit').innerText = parseFloat(data.net_profit || 0).toLocaleString() + " so'm";
+                document.getElementById('kpiReceiptCount').innerText = (data.receipt_count || 0) + " ta";
+                document.getElementById('kpiAvgReceipt').innerText = "O'rtacha: " + parseFloat(data.avg_receipt || 0).toLocaleString() + " so'm";
+                document.getElementById('kpiDebtTotal').innerText = parseFloat(data.debt_total || 0).toLocaleString() + " so'm";
+
+                // To'lov turlari
+                document.getElementById('payCash').innerText = parseFloat(data.cash_total || 0).toLocaleString() + " so'm";
+                document.getElementById('payCard').innerText = parseFloat(data.card_total || 0).toLocaleString() + " so'm";
+                document.getElementById('paySplit').innerText = parseFloat(data.split_total || 0).toLocaleString() + " so'm";
+                document.getElementById('payDebt').innerText = parseFloat(data.debt_total || 0).toLocaleString() + " so'm";
+
+                // Jadval
+                const tbody = document.getElementById('generalSalesTableBody');
+                tbody.innerHTML = '';
+
+                if (currentSalesList.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-muted"><i class="fas fa-receipt fa-2x d-block mb-2 opacity-50"></i>Tanlangan davr uchun savdolar topilmadi</td></tr>`;
+                    return;
+                }
+
+                currentSalesList.forEach(sale => {
+                    let badgeClass = sale.payment_method === 'CASH' ? 'bg-success' :
+                                    (sale.payment_method === 'CARD' ? 'bg-info text-dark' : 'bg-danger');
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">#${sale.id}</td>
+                            <td>${sale.created_at}</td>
+                            <td>${escapeHtml(sale.cashier_name)}</td>
+                            <td>${escapeHtml(sale.customer_name)}</td>
+                            <td><span class="badge ${badgeClass}">${escapeHtml(sale.payment_method_display)}</span></td>
+                            <td class="fw-bold text-dark">${parseFloat(sale.total_amount).toLocaleString()} so'm</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary shadow-sm px-2 py-1" onclick="openSaleDetail(${sale.id})" title="Chek tafsilotini ko'rish">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        } catch(e) {
+            console.error("Xatolik:", e);
+        }
+    }
+
+    // TAFSILOT MODALINI OCHISH
+    function openSaleDetail(saleId) {
+        const sale = currentSalesList.find(s => s.id === saleId);
+        if (!sale) {
+            alert("Chek ma'lumotlari topilmadi!");
+            return;
+        }
+
+        selectedSaleForPrint = sale;
+
+        document.getElementById('detailReceiptId').innerText = `#${sale.id}`;
+        document.getElementById('detailDateTime').innerText = `Sana: ${sale.created_at}`;
+        document.getElementById('detailCashier').innerText = sale.cashier_name || 'Admin';
+        document.getElementById('detailCustomer').innerText = sale.customer_name || 'Ommaviy mijoz';
+        document.getElementById('detailBranch').innerText = sale.branch_name || 'Asosiy filial';
+
+        let payBadgeClass = sale.payment_method === 'CASH' ? 'bg-success' :
+                           (sale.payment_method === 'CARD' ? 'bg-info text-dark' : 'bg-danger');
+        document.getElementById('detailPayMethod').className = `badge ${payBadgeClass}`;
+        document.getElementById('detailPayMethod').innerText = sale.payment_method_display || 'Naqd pul';
+
+        document.getElementById('detailTotalSum').innerText = parseFloat(sale.total_amount).toLocaleString() + " so'm";
+
+        const tbody = document.getElementById('detailItemsTableBody');
+        tbody.innerHTML = '';
+
+        if (!sale.items || sale.items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Bu chekda tovar tafsilotlari topilmadi</td></tr>';
+        } else {
+            sale.items.forEach((item, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td class="fw-semibold text-dark">${escapeHtml(item.product_name)}</td>
+                        <td><code>${escapeHtml(item.barcode || '—')}</code></td>
+                        <td class="text-end">${parseFloat(item.price).toLocaleString()} so'm</td>
+                        <td class="text-center fw-bold">${item.quantity} dona</td>
+                        <td class="text-end fw-bold text-primary">${parseFloat(item.total).toLocaleString()} so'm</td>
+                    </tr>
+                `;
+            });
+        }
+
+        let modal = new bootstrap.Modal(document.getElementById('saleDetailModal'));
+        modal.show();
+    }
+
+    // TAFSILOT MODALIDAN CHEK CHOP ETISH
+    function printDetailReceipt() {
+        if (!selectedSaleForPrint) return;
+
+        const sale = selectedSaleForPrint;
+        document.getElementById('printReceiptId').innerText = sale.id;
+        document.getElementById('printDate').innerText = sale.created_at;
+        document.getElementById('printCashier').innerText = sale.cashier_name || 'Admin';
+        document.getElementById('printPayMethod').innerText = sale.payment_method_display || 'Naqd pul';
+        document.getElementById('printTotalSum').innerText = parseFloat(sale.total_amount).toLocaleString() + " so'm";
+
+        const tbody = document.getElementById('printItemsTable');
+        tbody.innerHTML = '';
+
+        if (sale.items && sale.items.length > 0) {
+            sale.items.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold;">${escapeHtml(item.product_name)}</div>
+                            <div style="font-size: 9px; color: #444;">${parseFloat(item.price).toLocaleString()} x ${item.quantity}</div>
+                        </td>
+                        <td class="text-center" style="font-weight: bold;">${item.quantity}</td>
+                        <td class="text-end" style="font-weight: bold;">${parseFloat(item.total).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.print();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+</script>
+{% endblock %}

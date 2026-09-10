@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyo
+db.sqlite3
+.venv
+venv
+.env
+.git
+.gitignore
+*.zip
+*.bat
+*.exe
+dist
+build
+*.spec

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-users me-2"></i>Mijozlar Bo'yicha Savdo</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Mijoz Ismi</th><th>Xaridlar Soni</th><th>Jami Xarid Summasi</th><th>Hozirgi Qarzi</th></tr>
+            </thead>
+            <tbody id="customersReportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/general-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('customersReportBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>1</td>
+                    <td class="fw-bold">Ommaviy mijoz (Oddiy)</td>
+                    <td><span class="badge bg-secondary">${data.receipt_count || 0} ta</span></td>
+                    <td class="fw-bold text-primary">${parseFloat(data.total_sales || 0).toLocaleString()} so'm</td>
+                    <td class="fw-bold text-danger">${parseFloat(data.debt_total || 0).toLocaleString()} so'm</td>
+                </tr>
+            `;
+        }
+    });
+</script>
+{% endblock %}

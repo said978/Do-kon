@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-user-tie me-2"></i>Xodimlar Bo'yicha Savdo</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Kassir / Xodim</th><th>Cheklar Soni</th><th>Umumiy Savdo Summasi</th></tr>
+            </thead>
+            <tbody id="staffReportBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/general-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('staffReportBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>1</td>
+                    <td class="fw-bold">Admin</td>
+                    <td><span class="badge bg-primary">${data.receipt_count || 0} ta</span></td>
+                    <td class="fw-bold text-success">${parseFloat(data.total_sales || 0).toLocaleString()} so'm</td>
+                </tr>
+            `;
+        }
+    });
+</script>
+{% endblock %}

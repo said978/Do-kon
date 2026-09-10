@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-warehouse me-2"></i>Mahsulotlar Savdosi va Ombor</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Mahsulot Nomi</th><th>Sotilgan Miqdor</th><th>Jami Tushum</th></tr>
+            </thead>
+            <tbody id="productSalesBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        try {
+            let res = await fetch('/api/sales/reports/products-data/', { headers: {'Authorization': 'Bearer ' + token} });
+            let tbody = document.getElementById('productSalesBody');
+            if(res.ok) {
+                let data = await res.json();
+                tbody.innerHTML = '';
+                if(data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center p-3 text-muted">Ma\'lumotlar topilmadi</td></tr>';
+                    return;
+                }
+                data.forEach((item, idx) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td class="fw-bold">${item.name}</td>
+                            <td><span class="badge bg-primary">${parseFloat(item.quantity)} dona</span></td>
+                            <td class="fw-bold text-success">${parseFloat(item.total_sum).toLocaleString()} so'm</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                let errText = await res.text();
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center p-3 text-danger">Xatolik (${res.status}): ${errText.substring(0, 200)}</td></tr>`;
+            }
+        } catch(e) {
+            document.getElementById('productSalesBody').innerHTML = `<tr><td colspan="4" class="text-center p-3 text-danger">Xatolik: ${e.message}</td></tr>`;
+        }
+    });
+</script>
+{% endblock %}

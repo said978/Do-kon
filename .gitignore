@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Muhit va virtual muhitlar
+venv/
+env/
+ENV/
+.venv/
+
+# Maxfiy fayllar va muhit o'zgaruvchilari
+.env
+.env.local
+.env.*.local
+
+# Ma'lumotlar bazalari
+*.sqlite3
+*.sqlite3-journal
+
+# WhiteNoise / Django collectstatic natijalari (serverda avtomat yig'iladi)
+staticfiles/
+
+# Media yuklamalari (agar S3 ga o'tilsa)
+media/
+
+# IDE va tahrirlovchilar
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker lokal ma'lumotlari
+.docker/
+
+# Build va dist (PyInstaller va boshqalar)
+build/
+dist/
+Output/
+*.spec
+*.exe
+*.zip
+*.rar
+
+# Tizim fayllari
+.DS_Store
+Thumbs.db
+*.log

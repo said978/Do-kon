@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="fw-bold mb-0">Tovarlar va Ombor Boshqaruvi</h3>
+            <small class="text-muted">Ombordagi mahsulotlar qoldig'i, narxlari va Excel import/eksport</small>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary me-2"><i class="bi bi-download"></i> Shablon Yuklab Olish</button>
+            <button class="btn btn-success"><i class="bi bi-file-earmark-excel"></i> Excel'dan Import</button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Kategoriya</th>
+                            <th>Tovar Nomi</th>
+                            <th>Shtrix-kod</th>
+                            <th>Tannarx</th>
+                            <th>Sotish Narxi</th>
+                            <th class="text-center">Amallar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ product.category.name|default:"" }}</span></td>
+                            <td><strong>{{ product.name }}</strong></td>
+                            <td class="text-danger fw-semibold">{{ product.barcode|default:"" }}</td>
+                            <td>{{ product.cost_price|default:0 }} so'm</td>
+                            <td class="text-primary fw-bold">{{ product.selling_price }} so'm</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditModal({{ product.id }}, '{{ product.name|escapejs }}', '{{ product.barcode|escapejs }}', {{ product.category.id|default:'null' }}, {{ product.cost_price|default:0 }}, {{ product.selling_price|default:0 }})">
+                                    <i class="bi bi-pencil"></i> Tahrirlash
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openBarcodeModal({{ product.id }}, '{{ product.name|escapejs }}')">
+                                    <i class="bi bi-printer"></i> Shtrix-kod
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Mahsulotlar topilmadi.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tovarni Tahrirlash Modali -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil me-2"></i>Tovarni Tahrirlash</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProductId">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Tovar Nomi *</label>
+            <input type="text" id="editName" class="form-control">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Shtrix-Kod</label>
+            <input type="text" id="editBarcode" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Kategoriya *</label>
+            <select id="editCategory" class="form-select"></select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Tannarxi (so'm) *</label>
+            <input type="number" id="editCostPrice" class="form-control" step="0.01">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Sotish Narxi (so'm) *</label>
+            <input type="number" id="editSellPrice" class="form-control" step="0.01">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="button" onclick="submitEdit()" class="btn btn-warning fw-bold">
+          <i class="bi bi-check-circle me-1"></i> Saqlash
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Shtrix-kod Chop Etish Modali -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Shtrix-kod Chop Etish</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="barcodeProductName" class="fw-bold text-primary mb-2"></p>
+        <div class="mb-3">
+          <label class="form-label">Chop etiladigan etiketka soni:</label>
+          <input type="number" class="form-control" id="barcodeQuantity" value="1" min="1" max="500">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="button" class="btn btn-success" onclick="submitBarcodePrint()">
+          <i class="bi bi-printer-fill"></i> Chop Etish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedBarcodeProductId = null;
+
+// Tahrirlash modalini ochish
+function openEditModal(id, name, barcode, categoryId, costPrice, sellPrice) {
+    document.getElementById('editProductId').value = id;
+    document.getElementById('editName').value = name;
+    document.getElementById('editBarcode').value = barcode || '';
+    document.getElementById('editCostPrice').value = costPrice || 0;
+    document.getElementById('editSellPrice').value = sellPrice || 0;
+
+    // Kategoriyalarni yuklash
+    loadCategoriesForEdit(categoryId);
+
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+async function loadCategoriesForEdit(selectedId) {
+    let select = document.getElementById('editCategory');
+    select.innerHTML = '<option value="">Kategoriya tanlang</option>';
+    try {
+        let res = await fetch('/api/inventory/categories/', {
+            headers: {'Authorization': 'Bearer ' + localStorage.getItem('access_token')}
+        });
+        if (res.ok) {
+            let data = await res.json();
+            let cats = data.results || data;
+            cats.forEach(c => {
+                let selected = c.id == selectedId ? 'selected' : '';
+                select.innerHTML += `<option value="${c.id}" ${selected}>${c.name}</option>`;
+            });
+        }
+    } catch(e) {
+        console.error(e);
+    }
+}
+
+// Tahrirlashni saqlash
+async function submitEdit() {
+    let id = document.getElementById('editProductId').value;
+    let name = document.getElementById('editName').value.trim();
+    let barcode = document.getElementById('editBarcode').value.trim();
+    let category = document.getElementById('editCategory').value;
+    let costPrice = document.getElementById('editCostPrice').value;
+    let sellPrice = document.getElementById('editSellPrice').value;
+
+    if (!name || !category || !sellPrice) {
+        alert("Majburiy maydonlarni to'ldiring!");
+        return;
+    }
+
+    try {
+        let res = await fetch(`/api/inventory/products/${id}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
+            body: JSON.stringify({
+                name: name,
+                barcode: barcode || undefined,
+                category: parseInt(category),
+                cost_price: costPrice || 0,
+                selling_price: sellPrice
+            })
+        });
+
+        if (res.ok) {
+            alert("Tovar muvaffaqiyatli yangilandi!");
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            location.reload();
+        } else {
+            let err = await res.json();
+            alert("Xatolik: " + JSON.stringify(err));
+        }
+    } catch(e) {
+        console.error(e);
+        alert("Xatolik yuz berdi!");
+    }
+}
+
+// Shtrix-kod
+function openBarcodeModal(productId, productName) {
+    selectedBarcodeProductId = productId;
+    document.getElementById('barcodeProductName').innerText = productName;
+    document.getElementById('barcodeQuantity').value = 1;
+    new bootstrap.Modal(document.getElementById('barcodeModal')).show();
+}
+
+function submitBarcodePrint() {
+    if (!selectedBarcodeProductId) return;
+    let qty = document.getElementById('barcodeQuantity').value || 1;
+    let printUrl = `/api/sales/print-barcode/${selectedBarcodeProductId}/?quantity=${qty}`;
+    window.open(printUrl, '_blank', 'width=450,height=500');
+    bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+}
+</script>
+{% endblock %}

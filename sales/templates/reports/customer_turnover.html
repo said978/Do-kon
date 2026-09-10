@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <h4 class="fw-bold mb-3 text-primary"><i class="fas fa-sync me-2"></i>Mijoz Aylanmasi Hisoboti</h4>
+    <div class="card p-3 shadow-sm border-0">
+        <table class="table align-middle table-hover">
+            <thead class="table-light">
+                <tr><th>№</th><th>Mijoz</th><th>Boshlang'ich Qarz</th><th>Yangi Xarid</th><th>To'langan Qarz</th><th>Yakuniy Qarz</th></tr>
+            </thead>
+            <tbody id="customerTurnoverBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        let token = localStorage.getItem('access_token');
+        let res = await fetch('/api/sales/reports/general-data/', { headers: {'Authorization': 'Bearer ' + token} });
+        if(res.ok) {
+            let data = await res.json();
+            let tbody = document.getElementById('customerTurnoverBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td>1</td>
+                    <td class="fw-bold">Ommaviy mijoz</td>
+                    <td>0 so'm</td>
+                    <td class="text-primary fw-bold">${parseFloat(data.total_sales || 0).toLocaleString()} so'm</td>
+                    <td class="text-success">0 so'm</td>
+                    <td class="text-danger fw-bold">${parseFloat(data.debt_total || 0).toLocaleString()} so'm</td>
+                </tr>
+            `;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- TEPA TABLAR VA VIEW TUGMALARI -->
+    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-2 rounded shadow-sm border">
+        <!-- Bo'lim tablari -->
+        <div class="d-flex gap-2" id="reportTabs">
+            <button class="btn btn-primary btn-sm px-3 fw-bold tab-btn" onclick="filterReports('all', this)">Barchasi</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('savdo', this)">Savdo</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('crm', this)">CRM</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('taminot', this)">Ta'minot</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('ombor', this)">Ombor</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('moliya', this)">Moliya</button>
+            <button class="btn btn-light btn-sm px-3 text-secondary tab-btn" onclick="filterReports('hr', this)">Hr</button>
+        </div>
+
+        <!-- Jadval va Katak ko'rinishini almashtirish -->
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-primary btn-sm" id="btnViewTable" onclick="switchView('table')">
+                <i class="fas fa-list me-1"></i> Jadval
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btnViewGrid" onclick="switchView('grid')">
+                <i class="fas fa-th-large me-1"></i> Katak
+            </button>
+        </div>
+    </div>
+
+    <!-- 1. JADVAL KO'RINISHI -->
+    <div id="tableView" class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 60px;">№</th>
+                        <th>Nomi</th>
+                        <th style="width: 80px;" class="text-end">O'tish</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTableBody">
+                    <!-- JavaScript orqali to'ldiriladi -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 2. KATAK (GRID) KO'RINISHI -->
+    <div id="gridView" class="row g-3 d-none">
+        <!-- JavaScript orqali to'ldiriladi -->
+    </div>
+</div>
+
+<script>
+const reportsData = [
+    { id: 1, name: "Umumiy savdo", category: "savdo", url: "/api/sales/reports/general/" },
+    { id: 2, name: "Kirim-chiqim hisoboti", category: "moliya", url: "/api/sales/reports/in-out/" },
+    { id: 3, name: "Kassa aylanmasi hisoboti", category: "moliya", url: "/api/sales/reports/cash-flow/" },
+    { id: 4, name: "Mahsulotlar bo'yicha savdo", category: "savdo", url: "/api/sales/reports/products/" },
+    { id: 5, name: "Kategoriya bo'yicha savdo", category: "ombor", url: "/api/sales/reports/categories/" },
+    { id: 6, name: "Xodim bo'yicha savdo", category: "hr", url: "/api/sales/reports/staff/" },
+    { id: 7, name: "Mijoz bo'yicha savdo", category: "crm", url: "/api/sales/reports/customers/" },
+    { id: 8, name: "Mijoz aylanmasi hisoboti", category: "crm", url: "/api/sales/reports/customer-turnover/" },
+    { id: 9, name: "Yetkazib beruvchi aylanmasi hisoboti", category: "taminot", url: "/api/sales/reports/suppliers/" },
+    { id: 10, name: "Xodim aylanmasi hisoboti", category: "hr", url: "/api/sales/reports/staff-turnover/" },
+    { id: 11, name: "To'lov turi bo'yicha savdo", category: "moliya", url: "/api/sales/reports/payments/" },
+    { id: 12, name: "Mahsulotlar savdosi", category: "ombor", url: "/api/sales/reports/product-sales/" }
+];
+
+    let currentCategory = 'all';
+
+    document.addEventListener("DOMContentLoaded", function() {
+        renderReports();
+    });
+
+    function renderReports() {
+        const tableBody = document.getElementById('reportsTableBody');
+        const gridContainer = document.getElementById('gridView');
+
+        tableBody.innerHTML = '';
+        gridContainer.innerHTML = '';
+
+        const filtered = currentCategory === 'all'
+            ? reportsData
+            : reportsData.filter(r => r.category === currentCategory);
+
+        filtered.forEach((item, index) => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td class="fw-bold text-secondary">${index + 1}</td>
+                    <td class="fw-semibold text-dark">${item.name}</td>
+                    <td class="text-end">
+                        <a href="${item.url}" class="btn btn-sm btn-outline-primary border-0 fs-5" title="Hisobotni ko'rish">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+            `;
+
+            gridContainer.innerHTML += `
+                <div class="col-md-4 col-sm-6">
+                    <div class="card h-100 border-0 shadow-sm p-3 position-relative">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold text-dark m-0">${item.name}</h6>
+                            <a href="${item.url}" class="text-primary fs-5 ms-2">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                        <small class="text-muted mt-2 text-capitalize">Bo'lim: ${item.category}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        if (filtered.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-muted">Ushbu bo'limda hisobotlar topilmadi.</td></tr>`;
+        }
+    }
+
+    function filterReports(cat, btnElement) {
+        currentCategory = cat;
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.className = "btn btn-light btn-sm px-3 text-secondary tab-btn";
+        });
+        btnElement.className = "btn btn-primary btn-sm px-3 fw-bold tab-btn";
+        renderReports();
+    }
+
+    function switchView(viewType) {
+        const tableView = document.getElementById('tableView');
+        const gridView = document.getElementById('gridView');
+        const btnTable = document.getElementById('btnViewTable');
+        const btnGrid = document.getElementById('btnViewGrid');
+
+        if (viewType === 'table') {
+            tableView.classList.remove('d-none');
+            gridView.classList.add('d-none');
+            btnTable.className = "btn btn-primary btn-sm";
+            btnGrid.className = "btn btn-outline-primary btn-sm";
+        } else {
+            tableView.classList.add('d-none');
+            gridView.classList.remove('d-none');
+            btnTable.className = "btn btn-outline-primary btn-sm";
+            btnGrid.className = "btn btn-primary btn-sm";
+        }
+    }
+</script>
+{% endblock %}

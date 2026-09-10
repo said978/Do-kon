@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+
+{% block userlinks %}
+    <a href="/api/inventory/products-page/" style="background: #28a745; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 10px; text-decoration: none;">
+        📦 Tovarlarni Boshqarish
+    </a>
+    <a href="/api/sales/pos/" style="background: #17a2b8; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 10px; text-decoration: none;">
+        🛒 Kassa (POS)
+    </a>
+    {{ block.super }}
+{% endblock %}

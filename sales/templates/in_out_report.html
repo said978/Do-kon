@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- TEPA SARLAVHA VA FILTR -->
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+        <div>
+            <h4 class="fw-bold m-0 text-primary"><i class="fas fa-exchange-alt me-2"></i>Kirim-Chiqim Hisoboti</h4>
+            <small class="text-muted">Moliya oqimi, barcha kirimlar va xarajatlar tahlili</small>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <input type="date" id="startDate" class="form-control form-control-sm">
+            <input type="date" id="endDate" class="form-control form-control-sm">
+            <button class="btn btn-primary btn-sm fw-bold px-3" onclick="loadInOutReport()">
+                <i class="fas fa-filter me-1"></i> Saralash
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI BALANS BLOKLARI -->
+    <div class="row g-3 mb-4">
+        <!-- Jami Kirim -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-success text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">JAMI KIRIM (INCOME)</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiTotalIncome">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-arrow-down fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jami Chiqim -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-danger text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">JAMI CHIQIM (EXPENSE)</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiTotalExpense">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-arrow-up fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sof Balans -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm bg-primary text-white p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-white-50 fw-bold">SOF BALANS (NET CASH)</small>
+                        <h3 class="fw-bold m-0 mt-1" id="kpiNetBalance">0 so'm</h3>
+                    </div>
+                    <i class="fas fa-scale-balanced fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JADVAL -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold m-0 text-dark">Kirim va Chiqim Operatsiyalari</h6>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-success btn-sm fw-bold">
+                    <i class="fas fa-file-excel me-1"></i> Excel
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>№</th>
+                            <th>Vaqt</th>
+                            <th>Operatsiya Turi</th>
+                            <th>Kategoriya</th>
+                            <th>Summa</th>
+                            <th>Izoh</th>
+                            <th>Mas'ul Xodim</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inOutTableBody">
+                        <!-- JS orqali to'ldiriladi -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
+        document.getElementById('endDate').value = today;
+        loadInOutReport();
+    });
+
+    async function loadInOutReport() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const token = localStorage.getItem('access_token');
+
+        try {
+            const res = await fetch(`/api/sales/reports/in-out-data/?start_date=${start}&end_date=${end}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                
+                document.getElementById('kpiTotalIncome').innerText = parseFloat(data.total_income || 0).toLocaleString() + " so'm";
+                document.getElementById('kpiTotalExpense').innerText = parseFloat(data.total_expense || 0).toLocaleString() + " so'm";
+                document.getElementById('kpiNetBalance').innerText = parseFloat(data.net_balance || 0).toLocaleString() + " so'm";
+
+                const tbody = document.getElementById('inOutTableBody');
+                tbody.innerHTML = '';
+
+                if (!data.transactions || data.transactions.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-muted">Ushbu davrda operatsiyalar topilmadi</td></tr>`;
+                    return;
+                }
+
+                data.transactions.forEach((item, index) => {
+                    const isIncome = item.type === 'INCOME';
+                    const badgeClass = isIncome ? 'bg-success' : 'bg-danger';
+                    const amountSign = isIncome ? '+' : '-';
+                    const amountColor = isIncome ? 'text-success' : 'text-danger';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">${index + 1}</td>
+                            <td>${item.created_at}</td>
+                            <td><span class="badge ${badgeClass}">${isIncome ? 'Kirim' : 'Chiqim'}</span></td>
+                            <td><span class="badge bg-light text-dark border">${item.category}</span></td>
+                            <td class="fw-bold ${amountColor}">${amountSign} ${parseFloat(item.amount).toLocaleString()} so'm</td>
+                            <td><small class="text-muted">${item.description || '—'}</small></td>
+                            <td>${item.user_name}</td>
+                        </tr>
+                    `;
+                });
+            }
+        } catch(e) {
+            console.error("Kirim-chiqim hisoboti xatosi:", e);
+        }
+    }
+</script>
+{% endblock %}
