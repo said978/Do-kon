@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN python manage.py collectstatic --noinput
+
 RUN chmod +x /app/entrypoint.sh /app/gunicorn_run.py && sed -i 's/\r$//' /app/entrypoint.sh /app/gunicorn_run.py
 RUN cp /app/gunicorn_run.py /usr/local/bin/gunicorn && chmod +x /usr/local/bin/gunicorn
 

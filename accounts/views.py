@@ -39,6 +39,17 @@ def ensure_db_ready():
     except Exception as e:
         print("==> DO'KON POS loaddata ogohlantirish:", e)
 
+    # Statik fayllarni tekshirish (agar Docker build vaqtida yig'ilmagan bo'lsa)
+    try:
+        from django.conf import settings
+        import os
+        if not os.path.exists(settings.STATIC_ROOT) or not os.listdir(settings.STATIC_ROOT):
+            print("==> DO'KON POS: STATIC_ROOT bo'sh, collectstatic bajarilmoqda...")
+            call_command('collectstatic', interactive=False)
+            print("==> DO'KON POS: collectstatic muvaffaqiyatli yakunlandi!")
+    except Exception as e:
+        print("==> DO'KON POS collectstatic ogohlantirish:", e)
+
     try:
         from datetime import timedelta
         from django.utils import timezone
