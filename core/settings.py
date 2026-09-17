@@ -86,6 +86,9 @@ MIDDLEWARE = [
     'core.audit_middleware.AuditLogMiddleware',
 ]
 
+# Modal va iframe oynalari (Jazzmin related_modal) to'g'ri ishlashi uchun:
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 ROOT_URLCONF = 'core.urls'
 
 TEMPLATES = [
@@ -244,6 +247,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     "related_modal_active": True,
+    "custom_css": "css/admin_custom.css",
     "show_ui_builder": False,
 }
 

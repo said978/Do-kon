@@ -82,6 +82,12 @@ class BranchAdmin(admin.ModelAdmin):
     search_fields = ['name', 'company__name']
     list_filter = ['company']
 
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        if 'company' in request.GET:
+            initial['company'] = request.GET.get('company')
+        return initial
+
     def users_count(self, obj):
         count = obj.user_set.count()
         return format_html('<span class="badge" style="background-color: #0d6efd; color: white; padding: 2px 6px; border-radius: 4px;">{} xodim</span>', count)
@@ -100,6 +106,9 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Do\'kon va Xodim Roli', {'fields': ('company', 'branch', 'role')}),
     )
+
+    class Media:
+        js = ('js/admin_user_branch.js',)
 
     def full_name(self, obj):
         name = obj.get_full_name()
