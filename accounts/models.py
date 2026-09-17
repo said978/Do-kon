@@ -18,7 +18,11 @@ class Company(models.Model):
     timezone = models.CharField(max_length=50, default='Asia/Tashkent', verbose_name="Vaqt belgisi")
     language = models.CharField(max_length=10, default='uz', verbose_name="Til")
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Yaratilgan vaqti")
+
+    class Meta:
+        verbose_name = "Do'kon (Kompaniya)"
+        verbose_name_plural = "Do'konlar (Kompaniyalar)"
 
     def is_subscription_valid(self):
         return self.is_active and self.subscription_end_date >= timezone.now().date()
@@ -28,8 +32,12 @@ class Company(models.Model):
 
 
 class Branch(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='branches')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='branches', verbose_name="Do'kon / Kompaniya")
     name = models.CharField(max_length=255, verbose_name="Filial nomi")
+
+    class Meta:
+        verbose_name = "Filial"
+        verbose_name_plural = "Filiallar"
 
     def __str__(self):
         return f"{self.company.name} - {self.name}"
@@ -37,13 +45,17 @@ class Branch(models.Model):
 
 class User(AbstractUser):
     ROLE_CHOICES = (
-        ('ADMIN', 'Admin'),
-        ('CASHIER', 'Kassir'),
-        ('VIEWER', 'Ko\'ruvchi'),
+        ('ADMIN', 'Admin (Menejer)'),
+        ('CASHIER', 'Kassir (Sotuvchi)'),
+        ('VIEWER', 'Kuzatuvchi'),
     )
-    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
-    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='CASHIER')
+    company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Do'kon / Kompaniya")
+    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Filial")
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='CASHIER', verbose_name="Lavozim / Rol")
+
+    class Meta:
+        verbose_name = "Foydalanuvchi (Xodim)"
+        verbose_name_plural = "Foydalanuvchilar (Xodimlar)"
 
     def __str__(self):
         return f"{self.username} ({self.role})"

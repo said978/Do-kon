@@ -1,4 +1,4 @@
-﻿/* DO'KON Admin Custom JS - Quick Logout and UI helpers */
+﻿/* DO'KON Admin Custom JS - Quick Logout and UI Uzbek Translations */
 document.addEventListener('DOMContentLoaded', function () {
     // 1. Top Navbar ga qizil "Chiqish" tugmasini qo'shish
     try {
@@ -38,4 +38,72 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {
         console.warn('Sidebar logout button error:', e);
     }
+
+    // 3. Frontenddagi inglizcha qolgan elementlarni o'zbekchalashtirish
+    function localizeUI() {
+        // Select dropdownlardagi "- Select an option -" yoki "---------"
+        document.querySelectorAll('select option').forEach(opt => {
+            const txt = opt.textContent.trim();
+            if (txt === '- Select an option -' || txt === 'Select an option' || txt === '---------') {
+                opt.textContent = '- Tanlang -';
+            }
+        });
+
+        // Select2 rendered text
+        document.querySelectorAll('.select2-selection__rendered').forEach(el => {
+            const txt = el.textContent.trim();
+            if (txt === '- Select an option -' || txt === 'Select an option') {
+                el.textContent = '- Tanlang -';
+            }
+        });
+
+        // Select2 placeholder
+        document.querySelectorAll('.select2-selection__placeholder').forEach(el => {
+            if (el.textContent.includes('Select an option')) {
+                el.textContent = '- Tanlang -';
+            }
+        });
+
+        // "Go" tugmasi
+        document.querySelectorAll('button[type="submit"].button, button[name="index"]').forEach(btn => {
+            if (btn.textContent.trim() === 'Go') {
+                btn.textContent = 'Bajarish';
+            }
+        });
+
+        // Qidiruv maydoni (Search)
+        document.querySelectorAll('input[type="search"], input[name="q"]').forEach(inp => {
+            if (inp.placeholder && (inp.placeholder.startsWith('Search') || inp.placeholder.includes('Search'))) {
+                inp.placeholder = inp.placeholder.replace('Search', 'Qidirish');
+            }
+        });
+
+        // Modal sarlavhalari (Add another branch -> Yangi filial qo'shish)
+        document.querySelectorAll('.modal-title').forEach(t => {
+            let txt = t.textContent.trim();
+            if (txt.startsWith('Add another ')) {
+                const model = txt.replace('Add another ', '').trim();
+                const dict = {
+                    'branch': 'filial',
+                    'company': 'do\'kon',
+                    'user': 'xodim',
+                    'category': 'kategoriya',
+                    'product': 'mahsulot',
+                    'customer': 'mijoz'
+                };
+                const uzModel = dict[model.toLowerCase()] || model;
+                t.textContent = 'Yangi ' + uzModel + ' qo\'shish';
+            }
+        });
+    }
+
+    localizeUI();
+    setTimeout(localizeUI, 300);
+    setTimeout(localizeUI, 1000);
+
+    // Dynamic modal ochilganda ham yangilash
+    const observer = new MutationObserver(function () {
+        localizeUI();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 });

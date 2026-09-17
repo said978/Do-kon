@@ -100,11 +100,18 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ['role', 'company', 'is_active']
     search_fields = ['username', 'first_name', 'last_name', 'email']
 
-    fieldsets = UserAdmin.fieldsets + (
-        ('Do\'kon va Xodim Roli', {'fields': ('company', 'branch', 'role')}),
+    fieldsets = (
+        ("Asosiy ma'lumotlar", {'fields': ('username', 'password')}),
+        ("Shaxsiy ma'lumotlar", {'fields': ('first_name', 'last_name', 'email')}),
+        ("Do'kon va Xodim Roli", {'fields': ('company', 'branch', 'role')}),
+        ("Ruhsatnomalar va Huquqlar", {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ("Muhim sanalar", {'fields': ('last_login', 'date_joined')}),
     )
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Do\'kon va Xodim Roli', {'fields': ('company', 'branch', 'role')}),
+    add_fieldsets = (
+        ("Yangi xodim qo'shish", {
+            'classes': ('wide',),
+            'fields': ('username', 'password', 'role', 'company', 'branch', 'first_name', 'last_name', 'email'),
+        }),
     )
 
     class Media:

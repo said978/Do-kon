@@ -1,0 +1,365 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DOKON POS\n"
+"Language-Team: Uzbek\n"
+"Language: uz\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "%(sel)s of %(cnt)s selected"
+msgstr "%(cnt)sdan %(sel)stasi tanlandi"
+
+msgid "- Select an option -"
+msgstr "- Tanlang -"
+
+msgid "0 of %(cnt)s selected"
+msgstr "%(cnt)sdan 0 tasi tanlandi"
+
+msgid "Account"
+msgstr "Profil / Hisob"
+
+msgid "Accounts"
+msgstr "Xodimlar va Do'konlar"
+
+msgid "Action"
+msgstr "Harakat"
+
+msgid "Action:"
+msgstr "Harakat:"
+
+msgid "Active"
+msgstr "Faol"
+
+msgid "Add %(name)s"
+msgstr "%(name)s qo'shish"
+
+msgid "Add %(verbose_name)s"
+msgstr "%(verbose_name)s qo'shish"
+
+msgid "Add another %(verbose_name)s"
+msgstr "Yangi %(verbose_name)s qo'shish"
+
+msgid "Add another branch"
+msgstr "Yangi filial qo'shish"
+
+msgid "Add another company"
+msgstr "Yangi do'kon qo'shish"
+
+msgid "Add another user"
+msgstr "Yangi foydalanuvchi qo'shish"
+
+msgid "All"
+msgstr "Barchasi"
+
+msgid "Are you sure?"
+msgstr "Ishonchingiz komilmi?"
+
+msgid "Audit log"
+msgstr "Audit yozuvi"
+
+msgid "Audit logs"
+msgstr "Audit jurnali"
+
+msgid "Authentication and Authorization"
+msgstr "Xavfsizlik va Guruhlar"
+
+msgid "Branch"
+msgstr "Filial"
+
+msgid "Branches"
+msgstr "Filiallar"
+
+msgid "By %(filter_title)s"
+msgstr "%(filter_title)s bo'yicha"
+
+msgid "Categories"
+msgstr "Kategoriyalar"
+
+msgid "Category"
+msgstr "Kategoriya"
+
+msgid "Change %(name)s"
+msgstr "%(name)sni tahrirlash"
+
+msgid "Change %(verbose_name)s"
+msgstr "%(verbose_name)sni tahrirlash"
+
+msgid "Change password"
+msgstr "Parolni o'zgartirish"
+
+msgid "Clear selection"
+msgstr "Tanlovni tozalash"
+
+msgid "Companies"
+msgstr "Do'konlar (Kompaniyalar)"
+
+msgid "Company"
+msgstr "Do'kon (Kompaniya)"
+
+msgid "Customer"
+msgstr "Mijoz"
+
+msgid "Customers"
+msgstr "Mijozlar"
+
+msgid "Dashboard"
+msgstr "Bosh sahifa"
+
+msgid "Debt payment"
+msgstr "Qarz to'lovi"
+
+msgid "Debt payments"
+msgstr "Qarz to'lovlari"
+
+msgid "Delete"
+msgstr "O'chirish"
+
+msgid "Delete %(name)s"
+msgstr "%(name)sni o'chirish"
+
+msgid "Delete %(verbose_name)s"
+msgstr "%(verbose_name)sni o'chirish"
+
+msgid "Delete selected %(verbose_name_plural)s"
+msgstr "Tanlangan %(verbose_name_plural)sni o'chirish"
+
+msgid "Email address"
+msgstr "Email manzili"
+
+msgid "Filter"
+msgstr "Filtr"
+
+msgid "First name"
+msgstr "Ism"
+
+msgid "General"
+msgstr "Asosiy ma'lumotlar"
+
+msgid "Go"
+msgstr "Bajarish"
+
+msgid "Group"
+msgstr "Guruh"
+
+msgid "Groups"
+msgstr "Guruhlar"
+
+msgid "History"
+msgstr "O'zgarishlar tarixi"
+
+msgid "Home"
+msgstr "Bosh sahifa"
+
+msgid "Important dates"
+msgstr "Muhim sanalar"
+
+msgid "Inventory"
+msgstr "Ombor va Mahsulotlar"
+
+msgid "Last name"
+msgstr "Familiya"
+
+msgid "Log in"
+msgstr "Tizimga kirish"
+
+msgid "Log out"
+msgstr "Tizimdan chiqish"
+
+msgid "My actions"
+msgstr "Mening amallarim"
+
+msgid "Name"
+msgstr "Nomi"
+
+msgid "No"
+msgstr "Yo'q"
+
+msgid "No, take me back"
+msgstr "Yo'q, orqaga qaytish"
+
+msgid "None available"
+msgstr "Mavjud emas"
+
+msgid "Password"
+msgstr "Parol"
+
+msgid "Password confirmation"
+msgstr "Parolni tasdiqlash"
+
+msgid "Permissions"
+msgstr "Ruhsatnomalar"
+
+msgid "Personal info"
+msgstr "Shaxsiy ma'lumotlar"
+
+msgid "Phone"
+msgstr "Telefon raqami"
+
+msgid "Product"
+msgstr "Mahsulot (Tovar)"
+
+msgid "Products"
+msgstr "Mahsulotlar (Tovarlar)"
+
+msgid "Recent actions"
+msgstr "So'nggi amallar"
+
+msgid "Role"
+msgstr "Lavozim"
+
+msgid "Sale"
+msgstr "Savdo (Chek)"
+
+msgid "Sale item"
+msgstr "Chekdagi tovar"
+
+msgid "Sale items"
+msgstr "Chekdagi tovarlar"
+
+msgid "Sale return"
+msgstr "Qaytarilgan tovar"
+
+msgid "Sale returns"
+msgstr "Qaytarilgan tovarlar"
+
+msgid "Sales"
+msgstr "Savdolar (Xaridlar)"
+
+msgid "Save"
+msgstr "Saqlash"
+
+msgid "Save and add another"
+msgstr "Saqlash va yangi qo'shish"
+
+msgid "Save and continue editing"
+msgstr "Saqlash va davom etish"
+
+msgid "Search"
+msgstr "Qidirish"
+
+msgid "Search:"
+msgstr "Qidirish:"
+
+msgid "See Profile"
+msgstr "Profilni ko'rish"
+
+msgid "Select %(verbose_name)s to change"
+msgstr "Tahrirlash uchun %(verbose_name)sni tanlang"
+
+msgid "Select %(verbose_name)s to view"
+msgstr "Ko'rish uchun %(verbose_name)sni tanlang"
+
+msgid "Select all objects"
+msgstr "Barchasini tanlash"
+
+msgid "Select an option"
+msgstr "Tanlang"
+
+msgid "Site administration"
+msgstr "DO'KON Boshqaruv Markazi"
+
+msgid "Staff status"
+msgstr "Xodim (Admin panelga ruxsat)"
+
+msgid "Stock"
+msgstr "Ombor qoldig'i"
+
+msgid "Stocks"
+msgstr "Ombor qoldiqlari"
+
+msgid "Superuser status"
+msgstr "Bosh Admin (Cheksiz huquq)"
+
+msgid "The %(name)s ?%(obj)s? was added successfully."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli qo'shildi."
+
+msgid "The %(name)s ?%(obj)s? was added successfully. You may add another %(name)s below."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli qo'shildi. Quyida yangi %(name)s qo'shishingiz mumkin."
+
+msgid "The %(name)s ?%(obj)s? was added successfully. You may edit it again below."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli qo'shildi. Quyida uni tahrirlashingiz mumkin."
+
+msgid "The %(name)s ?%(obj)s? was changed successfully."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli saqlandi."
+
+msgid "The %(name)s ?%(obj)s? was changed successfully. You may edit it again below."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli saqlandi. Quyida uni tahrirlashingiz mumkin."
+
+msgid "The %(name)s ?%(obj)s? was deleted successfully."
+msgstr "?%(obj)s? (%(name)s) muvaffaqiyatli o'chirildi."
+
+msgid "Unknown"
+msgstr "Noma'lum"
+
+msgid "User"
+msgstr "Foydalanuvchi (Xodim)"
+
+msgid "Username"
+msgstr "Login (Foydalanuvchi nomi)"
+
+msgid "Users"
+msgstr "Foydalanuvchilar (Xodimlar)"
+
+msgid "View %(name)s"
+msgstr "%(name)sni ko'rish"
+
+msgid "View %(verbose_name)s"
+msgstr "%(verbose_name)sni ko'rish"
+
+msgid "View on site"
+msgstr "Saytda ko'rish"
+
+msgid "Yes"
+msgstr "Ha"
+
+msgid "Yes, I?m sure"
+msgstr "Ha, ishonchim komil"
+
+msgid "active"
+msgstr "Faol"
+
+msgid "date joined"
+msgstr "Ro'yxatdan o'tgan sana"
+
+msgid "email address"
+msgstr "Email manzili"
+
+msgid "first name"
+msgstr "Ism"
+
+msgid "groups"
+msgstr "Guruhlar"
+
+msgid "last login"
+msgstr "Oxirgi kirish vaqti"
+
+msgid "last name"
+msgstr "Familiya"
+
+msgid "name"
+msgstr "Nomi"
+
+msgid "password"
+msgstr "Parol"
+
+msgid "phone"
+msgstr "Telefon raqami"
+
+msgid "role"
+msgstr "Lavozim"
+
+msgid "site administration"
+msgstr "DO'KON Boshqaruv Markazi"
+
+msgid "staff status"
+msgstr "Xodim (Admin panelga ruxsat)"
+
+msgid "superuser status"
+msgstr "Bosh Admin (Cheksiz huquq)"
+
+msgid "user permissions"
+msgstr "Maxsus ruxsatlar"
+
+msgid "username"
+msgstr "Login (Foydalanuvchi nomi)"
