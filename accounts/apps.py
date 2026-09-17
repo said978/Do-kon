@@ -19,5 +19,11 @@ class AccountsConfig(AppConfig):
             User._meta.get_field('user_permissions').verbose_name = "Maxsus ruxsatnomalar"
             User._meta.get_field('last_login').verbose_name = "Oxirgi kirish vaqti"
             User._meta.get_field('date_joined').verbose_name = "Ro'yxatdan o'tgan sana"
+
+            from django.contrib.auth.models import Group
+            Group._meta.verbose_name = "Guruh"
+            Group._meta.verbose_name_plural = "Guruhlar"
+            Group._meta.get_field('name').verbose_name = "Guruh nomi"
+            Group._meta.get_field('permissions').verbose_name = "huquqlar"
         except Exception:
             pass

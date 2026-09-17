@@ -1,0 +1,101 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: DOKON POS\n"
+"Language-Team: Uzbek\n"
+"Language: uz\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+msgid "6 a.m."
+msgstr "06:00"
+
+msgid "6 p.m."
+msgstr "18:00"
+
+msgid "Available %s"
+msgstr "Mavjud %s"
+
+msgid "Calendar"
+msgstr "Kalendar"
+
+msgid "Cancel"
+msgstr "Bekor qilish"
+
+msgid "Choose %s by selecting them and then select the \"Choose\" arrow button."
+msgstr "Tanlash uchun kerakli %sni belgilang va \"Tanlash\" ko'rsatkich tugmasini bosing."
+
+msgid "Choose a Date"
+msgstr "Sanani tanlang"
+
+msgid "Choose a Time"
+msgstr "Vaqtni tanlang"
+
+msgid "Choose a date"
+msgstr "Sanani tanlang"
+
+msgid "Choose a time"
+msgstr "Vaqtni tanlang"
+
+msgid "Choose all %s"
+msgstr "Barcha %sni tanlash"
+
+msgid "Choose selected %s"
+msgstr "Belgilangan %sni tanlash"
+
+msgid "Chosen %s"
+msgstr "Tanlangan %s"
+
+msgid "Clear all"
+msgstr "Barchasini tozalash"
+
+msgid "Clear selection"
+msgstr "Tanlovni tozalash"
+
+msgid "Clock"
+msgstr "Soat"
+
+msgid "Filter"
+msgstr "Filtrlash"
+
+msgid "Hide"
+msgstr "Yashirish"
+
+msgid "Midnight"
+msgstr "Yarim tun"
+
+msgid "Noon"
+msgstr "Tush vaqti (12:00)"
+
+msgid "Now"
+msgstr "Hozir"
+
+msgid "Remove %s by selecting them and then select the \"Remove\" arrow button."
+msgstr "Olib tashlash uchun %sni belgilang va \"Olib tashlash\" ko'rsatkich tugmasini bosing."
+
+msgid "Remove selected %s"
+msgstr "Belgilangan %sni olib tashlash"
+
+msgid "Select %s"
+msgstr "%sni tanlash"
+
+msgid "Select all %s"
+msgstr "Barcha %sni tanlash"
+
+msgid "Show"
+msgstr "Ko'rsatish"
+
+msgid "Today"
+msgstr "Bugun"
+
+msgid "Tomorrow"
+msgstr "Ertaga"
+
+msgid "Type into this box to filter down the list of available %s."
+msgstr "Mavjud %slar ro'yxatini filtrlash uchun bu yerga yozing."
+
+msgid "Type into this box to filter down the list of selected %s."
+msgstr "Tanlangan %slar ro'yxatini filtrlash uchun bu yerga yozing."
+
+msgid "Yesterday"
+msgstr "Kecha"

@@ -46,6 +46,9 @@ msgstr "Yangi filial qo'shish"
 msgid "Add another company"
 msgstr "Yangi do'kon qo'shish"
 
+msgid "Add another group"
+msgstr "Yangi guruh qo'shish"
+
 msgid "Add another user"
 msgstr "Yangi foydalanuvchi qo'shish"
 
@@ -188,7 +191,7 @@ msgid "Password confirmation"
 msgstr "Parolni tasdiqlash"
 
 msgid "Permissions"
-msgstr "Ruhsatnomalar"
+msgstr "Ruhsatnomalar va Huquqlar"
 
 msgid "Personal info"
 msgstr "Shaxsiy ma'lumotlar"
@@ -328,8 +331,11 @@ msgstr "Email manzili"
 msgid "first name"
 msgstr "Ism"
 
+msgid "group"
+msgstr "guruh"
+
 msgid "groups"
-msgstr "Guruhlar"
+msgstr "guruhlar"
 
 msgid "last login"
 msgstr "Oxirgi kirish vaqti"
@@ -342,6 +348,12 @@ msgstr "Nomi"
 
 msgid "password"
 msgstr "Parol"
+
+msgid "permission"
+msgstr "huquq"
+
+msgid "permissions"
+msgstr "huquqlar"
 
 msgid "phone"
 msgstr "Telefon raqami"
@@ -357,6 +369,9 @@ msgstr "Xodim (Admin panelga ruxsat)"
 
 msgid "superuser status"
 msgstr "Bosh Admin (Cheksiz huquq)"
+
+msgid "user permission"
+msgstr "Maxsus ruxsat"
 
 msgid "user permissions"
 msgstr "Maxsus ruxsatlar"
