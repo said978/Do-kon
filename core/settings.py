@@ -226,6 +226,11 @@ JAZZMIN_SETTINGS = {
         {"name": "Tovarlar", "url": "/api/inventory/products-page/", "icon": "fas fa-boxes"},
         {"name": "Mijozlar", "url": "/api/sales/customers-page/", "icon": "fas fa-users"},
         {"name": "Hisobotlar", "url": "/api/sales/reports/general/", "icon": "fas fa-chart-line"},
+        {"name": "Chiqish", "url": "/logout/", "icon": "fas fa-sign-out-alt"},
+    ],
+
+    "usermenu_links": [
+        {"name": "Tizimdan Chiqish", "url": "/logout/", "icon": "fas fa-sign-out-alt"},
     ],
 
     "show_sidebar": True,
@@ -248,6 +253,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_children": "fas fa-circle",
     "related_modal_active": True,
     "custom_css": "css/admin_custom.css",
+    "custom_js": "js/admin_custom.js",
     "show_ui_builder": False,
 }
 
